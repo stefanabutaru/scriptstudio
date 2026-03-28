@@ -101,11 +101,37 @@ REGULI AVATAR:
 - Adaptează pentru platforma ${f.avatarPlatform || "HeyGen"}: ${f.avatarPlatform === "HeyGen" ? "suportă talking head cu gesturi limitate, screen share, templates" : f.avatarPlatform === "Synthesia" ? "suportă talking head frontal, slide-uri, screen recordings" : f.avatarPlatform === "D-ID" ? "suportă doar talking head frontal static, fără gesturi" : f.avatarPlatform === "Hedra" ? "suportă talking head cu lip sync, expresii faciale de bază" : "adaptează pentru platforma specificată"}.` : "";
   const brandVoice = f.brandVoice ? `\nBrand voice salvat: ${f.brandVoice.slice(0, 200)}` : "";
 
+  const postTypeNote = f.postType === "paid" ? `
+TIP CONȚINUT: PAID ADS (reclamă plătită)
+- Scriptul e pentru o RECLAMĂ plătită. Poate fi direct și persuasiv.
+- Hook-ul trebuie să oprească scrollul IMEDIAT — primele 1-3 secunde sunt critice pentru hook rate.
+- Structura: hook puternic → problemă/agitare → soluție → dovadă → urgență → CTA DIRECT de conversie.
+- CTA-ul trebuie să fie clar și acționabil: "Cumpără acum", "Înscrie-te azi", "Click pe link — oferta expiră în 24h".
+- Ad copy-ul (headline, description, caption) e ESENȚIAL — va fi afișat în platforma de ads.
+- Folosește urgență, scarcity, social proof agresiv. Audiența știe că e reclamă — nu te prefă că nu e.
+- Optimizează pentru CTR și conversii, nu pentru engagement organic.` : `
+TIP CONȚINUT: ORGANIC (postare neplătită)
+- Scriptul trebuie să arate ca CONȚINUT NATIV, nu ca reclamă. Dacă miroase a ad, lumea dă skip.
+- Hook-ul trebuie să fie conversațional, ca și cum vorbești cu un prieten: "Trebuie să-ți spun ceva...", "Știi ce m-a surprins?"
+- Structura: hook natural → poveste/observație → valoare → insight → CTA soft.
+- CTA-ul trebuie să fie SUBTIL: "Salvează ca să nu uiți", "Urmărește pentru partea 2", "Scrie-mi în comentarii dacă vrei să...", "Link în bio dacă te interesează".
+- NU folosi limbaj de vânzare agresiv. NU "cumpără acum", NU "ofertă limitată", NU "nu rata".
+- Ad copy-ul devine caption de postare — trebuie să fie conversațional, cu hook în prima linie și hashtag-uri relevante.
+- Optimizează pentru salvări, share-uri și comentarii — astea semnalizează algoritmului că e conținut valoros.
+- Tonul trebuie să fie autentic, relatable, ca un creator care împărtășește ceva util.`;
+
   // Inject historical performance data if available
   const topPerf = typeof getTopPerformers === "function" ? getTopPerformers() : [];
   const perfNote = topPerf.length > 0 ? `\nDATE DE PERFORMANȚĂ REALE din campaniile anterioare ale utilizatorului (FOLOSEȘTE-LE ca referință — repetă ce funcționează, evită ce nu):
-${topPerf.map((p, i) => `${i+1}. Hook: "${p.hook?.slice(0, 80)}" | Framework: ${p.framework || "?"} | Unghi: ${p.primaryTag || "?"} | Hook rate: ${p.hookRate ? p.hookRate + "%" : "?"} | CTR: ${p.ctr ? p.ctr + "%" : "?"} | Conversii: ${p.conversions ?? "?"} | Buget: ${p.spend ? p.spend + "€" : "?"}${p.notes ? " | Note: " + p.notes : ""}`).join("\n")}
-ANALIZEAZĂ pattern-urile: ce framework-uri au avut cel mai bun hook rate? Ce unghiuri psihologice au convertit cel mai bine? Folosește aceste insight-uri pentru a genera variante cu probabilitate mai mare de succes.` : "";
+${topPerf.map((p, i) => {
+    const base = `${i+1}. [${(p.type || "?").toUpperCase()}] Hook: "${p.hook?.slice(0, 80)}" | Framework: ${p.framework || "?"} | Unghi: ${p.primaryTag || "?"}`;
+    if (p.type === "organic") {
+      return `${base} | Vizualizări: ${p.views ?? "?"} | Watch time: ${p.watchTime ? p.watchTime + "%" : "?"} | Salvări: ${p.saves ?? "?"} | Comentarii: ${p.comments ?? "?"} | Share-uri: ${p.shares ?? "?"} | Followeri noi: ${p.newFollowers ?? "?"} | Reach: ${p.reach ?? "?"}${p.notes ? " | Note: " + p.notes : ""}`;
+    } else {
+      return `${base} | Hook rate: ${p.hookRate ? p.hookRate + "%" : "?"} | CTR: ${p.ctr ? p.ctr + "%" : "?"} | Conversii: ${p.conversions ?? "?"} | Cost/conv: ${p.costPerConv ? p.costPerConv + "€" : "?"} | ROAS: ${p.roas ?? "?"} | Buget: ${p.spend ? p.spend + "€" : "?"}${p.notes ? " | Note: " + p.notes : ""}`;
+    }
+  }).join("\n")}
+ANALIZEAZĂ pattern-urile: ce framework-uri au generat cele mai multe salvări/share-uri (organic) sau cel mai bun hook rate/CTR (paid)? Ce unghiuri psihologice au performat cel mai bine? Folosește aceste insight-uri.` : "";
 
   const psychoRules = `
 REGULI OBLIGATORII DE COPYWRITING PSIHOLOGIC:
@@ -180,7 +206,7 @@ Platformă: ${f.platform}
 Durată: ${f.length}
 Dovezi sociale: ${f.proof || "N/A"}
 Obiecția principală: ${f.objection || "N/A"}
-Obiectiv CTA: ${f.ctaGoal || "N/A"}${avatarNote}${brandVoice}${perfNote}
+Obiectiv CTA: ${f.ctaGoal || "N/A"}${avatarNote}${postTypeNote}${brandVoice}${perfNote}
 
 ${psychoRules}
 
@@ -195,7 +221,7 @@ ${f.offer ? "Ofertă: " + f.offer : ""}${f.audience ? "\nAudiență: " + f.audie
 
 Ești cel mai bun copywriter de conversie din România în 2026. Analizează pagina de vânzări și extrage: promisiunea principală, dovezile sociale, obiecțiile potențiale, audiența target, tonul brandului.
 
-Apoi generează 3 scripturi video RADICAL DIFERITE pentru ${f.platform}, durata ${f.length}, fiecare cu alt unghi psihologic.${avatarNote}${brandVoice}${perfNote}
+Apoi generează 3 scripturi video RADICAL DIFERITE pentru ${f.platform}, durata ${f.length}, fiecare cu alt unghi psihologic.${avatarNote}${postTypeNote}${brandVoice}${perfNote}
 ${ctxNote}
 PAGINA DE VÂNZĂRI:
 ${f.page.slice(0, 15000)}
@@ -221,7 +247,7 @@ ${f.ctaGoal ? "Obiectiv CTA: " + f.ctaGoal : ""}`.replace(/\n\n+/g, "\n") : "";
 
 Ești cel mai bun copywriter de conversie din România în 2026. Analizează scriptul de mai jos: identifică ce funcționează, ce e slab, și ce oportunități psihologice lipsesc.
 
-Apoi generează 3 variante COMPLET REIMAGINATE — nu "îmbunătățiri" ci REINTERPRETĂRI cu unghiuri psihologice diferite. ${f.platform}, ${f.length}.${avatarNote}${brandVoice}${perfNote}
+Apoi generează 3 variante COMPLET REIMAGINATE — nu "îmbunătățiri" ci REINTERPRETĂRI cu unghiuri psihologice diferite. ${f.platform}, ${f.length}.${avatarNote}${postTypeNote}${brandVoice}${perfNote}
 ${contextNote}
 SCRIPTUL ORIGINAL:
 ${f.script.slice(0, 3000)}
@@ -474,56 +500,87 @@ function savePerformanceLog(log) {
 }
 function getTopPerformers() {
   const log = getPerformanceLog();
-  return log.filter(e => e.hookRate || e.ctr || e.conversions).sort((a, b) => (b.hookRate || 0) - (a.hookRate || 0)).slice(0, 5);
+  return log.filter(e => e.views || e.hookRate || e.ctr || e.saves || e.conversions).sort((a, b) => {
+    if (a.type === "organic" && b.type === "organic") return (b.saves || 0) - (a.saves || 0);
+    if (a.type === "paid" && b.type === "paid") return (b.hookRate || 0) - (a.hookRate || 0);
+    return (b.hookRate || b.saves || 0) - (a.hookRate || a.saves || 0);
+  }).slice(0, 5);
 }
 
 function FeedbackPanel({ v, idx, t }) {
   const [open, setOpen] = useState(false);
+  const [postType, setPostType] = useState("organic");
+  // Organic fields
+  const [views, setViews] = useState("");
+  const [watchTime, setWatchTime] = useState("");
+  const [saves, setSaves] = useState("");
+  const [comments, setComments] = useState("");
+  const [shares, setShares] = useState("");
+  const [newFollowers, setNewFollowers] = useState("");
+  const [reach, setReach] = useState("");
+  // Paid fields
   const [hookRate, setHookRate] = useState("");
   const [ctr, setCtr] = useState("");
   const [conversions, setConversions] = useState("");
+  const [costPerConv, setCostPerConv] = useState("");
+  const [roas, setRoas] = useState("");
   const [spend, setSpend] = useState("");
+  // Common
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
 
   const hookId = (v.hook || "").slice(0, 50);
-  
-  // Check if already saved
+
   useEffect(() => {
     const log = getPerformanceLog();
     const existing = log.find(e => e.hookId === hookId);
     if (existing) {
-      setHookRate(existing.hookRate || "");
-      setCtr(existing.ctr || "");
-      setConversions(existing.conversions || "");
-      setSpend(existing.spend || "");
+      setPostType(existing.type || "organic");
+      setViews(existing.views || ""); setWatchTime(existing.watchTime || "");
+      setSaves(existing.saves || ""); setComments(existing.comments || "");
+      setShares(existing.shares || ""); setNewFollowers(existing.newFollowers || "");
+      setReach(existing.reach || "");
+      setHookRate(existing.hookRate || ""); setCtr(existing.ctr || "");
+      setConversions(existing.conversions || ""); setCostPerConv(existing.costPerConv || "");
+      setRoas(existing.roas || ""); setSpend(existing.spend || "");
       setNotes(existing.notes || "");
       setSaved(true);
     }
   }, [hookId]);
 
+  const hasData = postType === "organic" ? (views || saves || comments || shares) : (hookRate || ctr || conversions);
+
   const save = () => {
-    if (!hookRate && !ctr && !conversions) return;
+    if (!hasData) return;
     const log = getPerformanceLog();
     const entry = {
-      hookId,
-      hook: v.hook,
-      framework: v.framework || "",
-      hookName: v.hook_name || "",
-      primaryTag: v.psychology_tags?.primary || "",
-      score: v.conversion_score,
-      hookRate: hookRate ? parseFloat(hookRate) : null,
-      ctr: ctr ? parseFloat(ctr) : null,
-      conversions: conversions ? parseInt(conversions) : null,
-      spend: spend ? parseFloat(spend) : null,
-      notes,
-      date: new Date().toISOString().slice(0, 10),
+      hookId, type: postType,
+      hook: v.hook, framework: v.framework || "", hookName: v.hook_name || "",
+      primaryTag: v.psychology_tags?.primary || "", score: v.conversion_score,
+      ...(postType === "organic" ? {
+        views: views ? parseInt(views) : null, watchTime: watchTime ? parseFloat(watchTime) : null,
+        saves: saves ? parseInt(saves) : null, comments: comments ? parseInt(comments) : null,
+        shares: shares ? parseInt(shares) : null, newFollowers: newFollowers ? parseInt(newFollowers) : null,
+        reach: reach ? parseInt(reach) : null,
+      } : {
+        hookRate: hookRate ? parseFloat(hookRate) : null, ctr: ctr ? parseFloat(ctr) : null,
+        conversions: conversions ? parseInt(conversions) : null, costPerConv: costPerConv ? parseFloat(costPerConv) : null,
+        roas: roas ? parseFloat(roas) : null, spend: spend ? parseFloat(spend) : null,
+      }),
+      notes, date: new Date().toISOString().slice(0, 10),
     };
-    const idx = log.findIndex(e => e.hookId === hookId);
-    if (idx >= 0) log[idx] = entry; else log.unshift(entry);
+    const i = log.findIndex(e => e.hookId === hookId);
+    if (i >= 0) log[i] = entry; else log.unshift(entry);
     savePerformanceLog(log);
     setSaved(true);
   };
+
+  const fld = (label, val, set, ph, step) => (
+    <div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: t.muted, marginBottom: 3, textTransform: "uppercase", letterSpacing: ".06em" }}>{label}</div>
+      <input value={val} onChange={e => set(e.target.value)} placeholder={ph} type="number" step={step || "1"} style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "7px 10px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none", boxSizing: "border-box" }} />
+    </div>
+  );
 
   return (
     <div style={{ margin: "0 22px 22px" }}>
@@ -532,31 +589,42 @@ function FeedbackPanel({ v, idx, t }) {
         <span style={{ fontSize: 10, color: t.muted }}>{open ? "▲" : "▼"}</span>
       </button>
       {open && (
-        <div style={{ marginTop: 8, padding: 14, background: t.barBg, borderRadius: 8, display: "grid", gap: 8 }}>
+        <div style={{ marginTop: 8, padding: 14, background: t.barBg, borderRadius: 8, display: "grid", gap: 10 }}>
           <div style={{ fontSize: 10, color: t.muted, lineHeight: 1.5 }}>Completează după ce publici scriptul. Datele ajută la generările viitoare.</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: t.muted, marginBottom: 3, textTransform: "uppercase", letterSpacing: ".06em" }}>Hook rate %</div>
-              <input value={hookRate} onChange={e => setHookRate(e.target.value)} placeholder="ex: 45" type="number" step="0.1" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "7px 10px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none", boxSizing: "border-box" }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: t.muted, marginBottom: 3, textTransform: "uppercase", letterSpacing: ".06em" }}>CTR %</div>
-              <input value={ctr} onChange={e => setCtr(e.target.value)} placeholder="ex: 2.4" type="number" step="0.01" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "7px 10px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none", boxSizing: "border-box" }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: t.muted, marginBottom: 3, textTransform: "uppercase", letterSpacing: ".06em" }}>Conversii</div>
-              <input value={conversions} onChange={e => setConversions(e.target.value)} placeholder="ex: 12" type="number" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "7px 10px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none", boxSizing: "border-box" }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: t.muted, marginBottom: 3, textTransform: "uppercase", letterSpacing: ".06em" }}>Buget cheltuit</div>
-              <input value={spend} onChange={e => setSpend(e.target.value)} placeholder="ex: 150" type="number" step="0.01" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "7px 10px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none", boxSizing: "border-box" }} />
-            </div>
+          
+          {/* Organic / Paid toggle */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+            {[["organic", "📱 Organic"], ["paid", "💰 Paid Ads"]].map(([id, lbl]) => (
+              <button key={id} onClick={() => setPostType(id)} style={{ background: postType === id ? t.accent : "transparent", border: `1px solid ${postType === id ? t.accent : t.border}`, borderRadius: 6, padding: "7px 8px", fontSize: 11, fontWeight: 600, color: postType === id ? "white" : t.muted, cursor: "pointer", fontFamily: "inherit" }}>{lbl}</button>
+            ))}
           </div>
+
+          {postType === "organic" ? (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {fld("Vizualizări", views, setViews, "ex: 12500")}
+              {fld("Watch time mediu %", watchTime, setWatchTime, "ex: 45", "0.1")}
+              {fld("Salvări", saves, setSaves, "ex: 340")}
+              {fld("Comentarii", comments, setComments, "ex: 87")}
+              {fld("Share-uri", shares, setShares, "ex: 156")}
+              {fld("Followeri noi", newFollowers, setNewFollowers, "ex: 45")}
+              {fld("Reach", reach, setReach, "ex: 28000")}
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {fld("Hook rate %", hookRate, setHookRate, "ex: 45", "0.1")}
+              {fld("CTR %", ctr, setCtr, "ex: 2.4", "0.01")}
+              {fld("Conversii", conversions, setConversions, "ex: 12")}
+              {fld("Cost / conversie €", costPerConv, setCostPerConv, "ex: 8.50", "0.01")}
+              {fld("ROAS", roas, setRoas, "ex: 3.2", "0.1")}
+              {fld("Buget cheltuit €", spend, setSpend, "ex: 150", "0.01")}
+            </div>
+          )}
+
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, color: t.muted, marginBottom: 3, textTransform: "uppercase", letterSpacing: ".06em" }}>Note (opțional)</div>
             <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="ex: A mers foarte bine pe femei 25-35" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "7px 10px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none", boxSizing: "border-box" }} />
           </div>
-          <button onClick={save} style={{ background: t.green, color: "white", border: "none", borderRadius: 7, padding: "9px 14px", fontFamily: "inherit", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={save} disabled={!hasData} style={{ background: hasData ? t.green : t.muted, color: "white", border: "none", borderRadius: 7, padding: "9px 14px", fontFamily: "inherit", fontSize: 12, fontWeight: 600, cursor: hasData ? "pointer" : "not-allowed" }}>
             {saved ? "🔄 Actualizează" : "💾 Salvează performanța"}
           </button>
         </div>
@@ -605,6 +673,7 @@ export default function App() {
   const t = dark ? DARK : LIGHT;
 
   const [mode, setMode] = useState("manual");
+  const [postType, setPostType] = useState("organic"); // organic | paid
   const [loading, setLoading] = useState(false);
   const [loadMsg, setLoadMsg] = useState(MSGS[0]);
   const [variants, setVariants] = useState([]);
@@ -688,15 +757,15 @@ export default function App() {
     const avatarFields = { avatarMode, avatarPlatform, avatarType, avatarTone, avatarMaxScene, avatarDesc };
     if (mode === "manual") {
       if (!offer || !value || !audience) { setError("Completează: ofertă, valoare și audiență."); return; }
-      prompt = buildPrompt("manual", { offer, category, value, audience, stage, objective, platform, length, proof, objection, ctaGoal, brandVoice: bv, ...avatarFields });
+      prompt = buildPrompt("manual", { offer, category, value, audience, stage, objective, platform, length, proof, objection, ctaGoal, brandVoice: bv, postType, ...avatarFields });
       label = offer;
     } else if (mode === "analyzer") {
       if (!page) { setError("Lipește textul paginii de vânzări."); return; }
-      prompt = buildPrompt("analyzer", { page, platform: aPlatform, length: aLength, brandVoice: bv, ...avatarFields, offer, category, value, audience, stage, objective, proof, objection, ctaGoal });
+      prompt = buildPrompt("analyzer", { page, platform: aPlatform, length: aLength, brandVoice: bv, postType, ...avatarFields, offer, category, value, audience, stage, objective, proof, objection, ctaGoal });
       label = "Pagină analizată";
     } else {
       if (!script) { setError("Lipește scriptul de recreat."); return; }
-      prompt = buildPrompt("recreate", { script, platform: rPlatform, length: rLength, brandVoice: bv, ...avatarFields, offer, category, value, audience, stage, objective, proof, objection, ctaGoal });
+      prompt = buildPrompt("recreate", { script, platform: rPlatform, length: rLength, brandVoice: bv, postType, ...avatarFields, offer, category, value, audience, stage, objective, proof, objection, ctaGoal });
       label = "Recreare script";
     }
     lastPromptRef.current = prompt;
@@ -1113,9 +1182,16 @@ export default function App() {
         {/* SIDEBAR */}
         {sidebarOpen && <div className="ss-sidebar" style={{ background: t.card, borderRight: `1px solid ${t.border}`, padding: "20px 18px", overflowY: "auto", transition: "background .3s", maxHeight: "calc(100vh - 52px)" }}>
           {/* Mode tabs */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5, marginBottom: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5, marginBottom: 10 }}>
             {[["manual", "Manual"], ["analyzer", "Analizor"], ["recreate", "Recreare"]].map(([id, lbl]) => (
               <button key={id} onClick={() => setMode(id)} style={{ background: mode === id ? t.accent : t.sand, border: `1px solid ${mode === id ? t.accent : t.border}`, borderRadius: 7, padding: "9px 4px", fontSize: 11, fontWeight: 600, letterSpacing: ".04em", textTransform: "uppercase", cursor: "pointer", color: mode === id ? "white" : t.muted, fontFamily: "inherit" }}>{lbl}</button>
+            ))}
+          </div>
+
+          {/* Organic / Paid toggle */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginBottom: 16 }}>
+            {[["organic", "📱 Organic"], ["paid", "💰 Paid Ads"]].map(([id, lbl]) => (
+              <button key={id} onClick={() => setPostType(id)} style={{ background: postType === id ? (id === "organic" ? t.green : "#2196F3") : t.barBg, border: `1px solid ${postType === id ? (id === "organic" ? t.green : "#2196F3") : t.border}`, borderRadius: 7, padding: "8px 4px", fontSize: 11, fontWeight: 600, cursor: "pointer", color: postType === id ? "white" : t.muted, fontFamily: "inherit", transition: "all .2s" }}>{lbl}</button>
             ))}
           </div>
 
