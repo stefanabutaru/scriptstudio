@@ -75,9 +75,9 @@ export default async function handler(req, res) {
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
-    // Limit to ~4000 chars (enough for analysis, fits in prompt)
-    if (text.length > 4000) {
-      text = text.slice(0, 4000) + '\n\n[... textul a fost trunchiat la 4000 caractere]';
+    // Limit to ~15000 chars (enough for any landing page)
+    if (text.length > 15000) {
+      text = text.slice(0, 15000) + '\n\n[... textul a fost trunchiat la 15.000 caractere]';
     }
 
     if (text.length < 50) {

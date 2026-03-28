@@ -116,6 +116,11 @@ REGULI OBLIGATORII DE COPYWRITING PSIHOLOGIC:
 11. "posting_tip" trebuie să fie sfat PRACTIC de postare (ora, hashtag-uri, format).
 12. "style" trebuie RECOMANDAT de tine pentru fiecare variantă — alege cel mai potrivit stil video (talking_head, screen_recording, b_roll, mixed) în funcție de conținutul scriptului și platforma target. NU pune mereu talking_head — gândește ce stil servește cel mai bine mesajul.
 13. "captions" trebuie RECOMANDAT de tine — alege între burned_in (subtitrări integrate), auto_generated (generate automat), none (fără). Alege în funcție de platformă și stil. De exemplu: pentru TikTok cu talking_head → burned_in; pentru YouTube cu screen_recording → auto_generated.
+14. DURATA SCRIPTULUI este CRITICĂ — respectă STRICT durata selectată:
+   - "Scurt (20-45s)": TOTAL voiceover max 40 secunde. 4-6 linii scurte. Hook de 3s, 2-3 linii de corp, CTA de 5s. On-screen text: max 3-4.
+   - "Mediu (45-90s)": TOTAL voiceover 50-80 secunde. 6-10 linii. Hook 3s, problemă 10s, agitare 10s, soluție 15s, dovadă 10s, CTA 7s. On-screen text: 5-7.
+   - "Lung (1-2 min)": TOTAL voiceover 70-110 secunde. 10-15 linii. Hook 3s, context 10s, problemă 15s, agitare 15s, soluție 20s, dovezi 15s, CTA 10s. On-screen text: 7-10.
+   SUMA TUTUROR "seconds" din voiceover_lines TREBUIE să fie în intervalul duratei selectate. Verifică înainte de a returna JSON-ul.
 
 LIMBA: Română naturală, de conversație. NU traduceți din engleză. Gândește direct în română.
 
@@ -151,28 +156,44 @@ ${psychoRules}
 IMPORTANT TEHNIC: Fiecare voiceover_line cu timing (seconds). Fiecare on_screen_text cu timing. Shot list cu type (talking_head, screen_recording, b_roll). psychology_tags cu primary și secondary (secondary poate fi null). Returnează EXCLUSIV JSON valid, 3 variante complete:
 ${schema}`;
   } else if (mode === "analyzer") {
+    const ctxNote = (f.offer || f.audience || f.value) ? `
+CONTEXT SUPLIMENTAR (dacă e relevant, folosește-l):
+${f.offer ? "Ofertă: " + f.offer : ""}${f.audience ? "\nAudiență: " + f.audience : ""}${f.value ? "\nPropunere valoare: " + f.value : ""}${f.objective ? "\nObiectiv: " + f.objective : ""}${f.ctaGoal ? "\nObiectiv CTA: " + f.ctaGoal : ""}` : "";
+
     return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
 
 Ești cel mai bun copywriter de conversie din România în 2026. Analizează pagina de vânzări și extrage: promisiunea principală, dovezile sociale, obiecțiile potențiale, audiența target, tonul brandului.
 
 Apoi generează 3 scripturi video RADICAL DIFERITE pentru ${f.platform}, durata ${f.length}, fiecare cu alt unghi psihologic.${avatarNote}${brandVoice}
-
+${ctxNote}
 PAGINA DE VÂNZĂRI:
-${f.page.slice(0, 2000)}
+${f.page.slice(0, 15000)}
 
 ${psychoRules}
 
 Returnează EXCLUSIV JSON valid, 3 variante:
 ${schema}`;
   } else {
+  const contextNote = (f.offer || f.audience || f.value) ? `
+CONTEXT DESPRE OFERTĂ (folosește pentru a adapta scriptul):
+${f.offer ? "Ofertă: " + f.offer : ""}
+${f.category ? "Categorie: " + f.category : ""}
+${f.value ? "Propunere valoare: " + f.value : ""}
+${f.audience ? "Audiență: " + f.audience : ""}
+${f.stage ? "Stadiu: " + f.stage : ""}
+${f.objective ? "Obiectiv: " + f.objective : ""}
+${f.proof ? "Dovezi: " + f.proof : ""}
+${f.objection ? "Obiecția principală: " + f.objection : ""}
+${f.ctaGoal ? "Obiectiv CTA: " + f.ctaGoal : ""}`.replace(/\n\n+/g, "\n") : "";
+
     return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
 
 Ești cel mai bun copywriter de conversie din România în 2026. Analizează scriptul de mai jos: identifică ce funcționează, ce e slab, și ce oportunități psihologice lipsesc.
 
 Apoi generează 3 variante COMPLET REIMAGINATE — nu "îmbunătățiri" ci REINTERPRETĂRI cu unghiuri psihologice diferite. ${f.platform}, ${f.length}.${avatarNote}${brandVoice}
-
+${contextNote}
 SCRIPTUL ORIGINAL:
-${f.script.slice(0, 1500)}
+${f.script.slice(0, 3000)}
 
 ${psychoRules}
 
@@ -535,11 +556,11 @@ export default function App() {
       label = offer;
     } else if (mode === "analyzer") {
       if (!page) { setError("Lipește textul paginii de vânzări."); return; }
-      prompt = buildPrompt("analyzer", { page, platform: aPlatform, length: aLength, brandVoice: bv, ...avatarFields });
+      prompt = buildPrompt("analyzer", { page, platform: aPlatform, length: aLength, brandVoice: bv, ...avatarFields, offer, category, value, audience, stage, objective, proof, objection, ctaGoal });
       label = "Pagină analizată";
     } else {
       if (!script) { setError("Lipește scriptul de recreat."); return; }
-      prompt = buildPrompt("recreate", { script, platform: rPlatform, length: rLength, brandVoice: bv, ...avatarFields });
+      prompt = buildPrompt("recreate", { script, platform: rPlatform, length: rLength, brandVoice: bv, ...avatarFields, offer, category, value, audience, stage, objective, proof, objection, ctaGoal });
       label = "Recreare script";
     }
     lastPromptRef.current = prompt;
