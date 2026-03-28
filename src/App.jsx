@@ -723,7 +723,7 @@ Răspunde DOAR cu textul audienței, nimic altceva. În română naturală. Un p
       if (!res.ok) throw new Error(data.error || "Eroare");
       let text = data.text || "";
       if (!text && data.variants) text = "";
-      if (text) setAudience(text.trim().slice(0, 500));
+      if (text) setAudience(text.trim().slice(0, 1500));
       else throw new Error("Nu am primit sugestie de audiență");
     } catch (e) {
       setError("Eroare optimizare: " + e.message);
