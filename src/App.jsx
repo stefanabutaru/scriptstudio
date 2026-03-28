@@ -165,7 +165,7 @@ function VariantCard({ v, idx, t, onRefine }) {
     setRefining(false);
   };
 
-  const allText = `HOOK: ${v.hook}\n\nVOICEOVER:\n${(v.voiceover_lines||[]).map((l,i)=>`${i+1}. ${l.line}`).join("\n")}\n\nON-SCREEN TEXT:\n${(v.on_screen_texts||[]).map(t=>t.text).join("\n")}\n\nSHOT LIST:\n${(v.shot_list||[]).map(s=>typeof s==="string"?s:s.shot).join("\n")}\n\nCTA: ${cta.primary||v.cta}\n\nAD COPY:\nHeadline: ${ad.headline||""}\nDescription: ${ad.description||""}\nCaption: ${ad.caption||}`;
+  const allText = `HOOK: ${v.hook}\n\nVOICEOVER:\n${(v.voiceover_lines||[]).map((l,i)=>`${i+1}. ${l.line}`).join("\n")}\n\nON-SCREEN TEXT:\n${(v.on_screen_texts||[]).map(t=>t.text).join("\n")}\n\nSHOT LIST:\n${(v.shot_list||[]).map(s=>typeof s==="string"?s:s.shot).join("\n")}\n\nCTA: ${cta.primary||v.cta}\n\nAD COPY:\nHeadline: ${ad.headline||""}\nDescription: ${ad.description||""}\nCaption: ${ad.caption||""}`;
 
   const scoreItems = [
     ["attention", "Atenție & Claritate", t.accent],
