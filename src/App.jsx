@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { DEJAVU_REGULAR, DEJAVU_BOLD } from "./fonts.js";
 
 /* ─── THEME ─── */
 const LIGHT = {
@@ -491,24 +492,321 @@ export default function App() {
   const exportPDF = async () => {
     try {
       const { jsPDF } = await import("jspdf");
-      const doc = new jsPDF();
-      let y = 20;
-      doc.setFontSize(18);
-      doc.text(`ScriptStudio — ${offerLabel}`, 14, y); y += 12;
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+      const W = 210, M = 16, CW = W - M * 2; // page width, margin, content width
+
+      // Register DejaVu fonts with Romanian diacritics
+      doc.addFileToVFS("DejaVuSans.ttf", DEJAVU_REGULAR);
+      doc.addFont("DejaVuSans.ttf", "DejaVu", "normal");
+      doc.addFileToVFS("DejaVuSans-Bold.ttf", DEJAVU_BOLD);
+      doc.addFont("DejaVuSans-Bold.ttf", "DejaVu", "bold");
+
+      const DARK = [26, 21, 18];
+      const ACCENT = [232, 98, 26];
+      const MUTED = [122, 110, 95];
+      const GREEN = [42, 122, 75];
+      const LIGHT_BG = [245, 240, 232];
+
+      let y = 0;
+      const checkPage = (need = 20) => { if (y > 277 - need) { doc.addPage(); y = 20; } };
+      const setF = (style, size) => { doc.setFont("DejaVu", style); doc.setFontSize(size); };
+      const textW = (txt, size, style = "normal") => { setF(style, size); return doc.getStringUnitWidth(txt) * size * 0.3528; };
+      const drawLine = (y1, color = MUTED) => { doc.setDrawColor(...color); doc.setLineWidth(0.3); doc.line(M, y1, W - M, y1); };
+
+      // === COVER / HEADER ===
+      doc.setFillColor(...DARK);
+      doc.rect(0, 0, W, 40, "F");
+      setF("bold", 22);
+      doc.setTextColor(245, 240, 232);
+      doc.text("ScriptStudio", M, 18);
+      setF("normal", 10);
+      doc.setTextColor(...ACCENT);
+      doc.text("by @steph.ai.studio", M, 26);
+      setF("normal", 9);
+      doc.setTextColor(180, 175, 165);
+      doc.text(new Date().toLocaleDateString("ro-RO", { year: "numeric", month: "long", day: "numeric" }), W - M, 18, { align: "right" });
+      doc.text(`${variants.length} variante generate`, W - M, 24, { align: "right" });
+
+      // Title bar
+      y = 50;
+      doc.setFillColor(...LIGHT_BG);
+      doc.roundedRect(M, y, CW, 14, 2, 2, "F");
+      setF("bold", 13);
+      doc.setTextColor(...DARK);
+      doc.text(offerLabel || "Scripturi generate", M + 5, y + 9);
+
+      y = 72;
+
+      // === EACH VARIANT ===
       variants.forEach((v, i) => {
-        if (y > 250) { doc.addPage(); y = 20; }
-        doc.setFontSize(13);
-        doc.text(`Variantă ${String.fromCharCode(65+i)} — Scor: ${v.conversion_score}`, 14, y); y += 8;
-        doc.setFontSize(10);
-        doc.text(`Hook: ${v.hook}`, 14, y, { maxWidth: 180 }); y += 6 + Math.floor(v.hook.length / 70) * 5;
-        const lines = (v.voiceover_lines||[]).map(l=>l.line).join(" ");
-        const split = doc.splitTextToSize(`Voiceover: ${lines}`, 180);
-        doc.text(split, 14, y); y += split.length * 5 + 4;
-        doc.text(`CTA: ${v.cta?.primary || v.cta || ""}`, 14, y); y += 8;
-        doc.text("─".repeat(60), 14, y); y += 8;
+        checkPage(60);
+        const pt = v.psychology_tags || {};
+        const sb = v.score_breakdown || {};
+        const cta = v.cta || {};
+        const ad = v.ad_copy || {};
+        const letter = String.fromCharCode(65 + i);
+
+        // ─── Variant header with score ───
+        doc.setFillColor(...ACCENT);
+        doc.roundedRect(M, y, CW, 12, 2, 2, "F");
+        setF("bold", 12);
+        doc.setTextColor(255, 255, 255);
+        doc.text(`Varianta ${letter}`, M + 5, y + 8);
+        // Score circle
+        const scoreX = W - M - 14;
+        doc.setFillColor(255, 255, 255);
+        doc.circle(scoreX, y + 6, 5, "F");
+        setF("bold", 10);
+        doc.setTextColor(...ACCENT);
+        doc.text(`${v.conversion_score}`, scoreX, y + 7.5, { align: "center" });
+        y += 16;
+
+        // Psychology tags
+        if (pt.primary) {
+          setF("normal", 8);
+          doc.setTextColor(...MUTED);
+          const tagLine = `Primary: ${TAG_LABELS[pt.primary] || pt.primary}${pt.secondary ? "  |  Secondary: " + (TAG_LABELS[pt.secondary] || pt.secondary) : ""}`;
+          doc.text(tagLine, M, y);
+          y += 5;
+        }
+
+        // Style / Captions / Ratio
+        setF("normal", 7);
+        doc.setTextColor(...MUTED);
+        doc.text(`Style: ${v.style || "mixed"}  |  Captions: ${v.captions || "burned_in"}  |  Ratio: ${v.ratio || "9:16"}`, M, y);
+        y += 7;
+
+        // ─── HOOK ───
+        checkPage(20);
+        setF("bold", 8);
+        doc.setTextColor(...ACCENT);
+        doc.text("HOOK", M, y);
+        y += 5;
+        setF("bold", 11);
+        doc.setTextColor(...DARK);
+        const hookLines = doc.splitTextToSize(v.hook || "", CW);
+        doc.text(hookLines, M, y);
+        y += hookLines.length * 5 + 4;
+
+        // ─── VOICEOVER ───
+        checkPage(15);
+        setF("bold", 8);
+        doc.setTextColor(21, 101, 192);
+        doc.text("VOICEOVER SCRIPT", M, y);
+        y += 5;
+        (v.voiceover_lines || []).forEach((l, li) => {
+          checkPage(10);
+          setF("bold", 8);
+          doc.setTextColor(...ACCENT);
+          doc.text(`${li + 1}.`, M, y);
+          setF("normal", 9);
+          doc.setTextColor(...DARK);
+          const vLines = doc.splitTextToSize(l.line || "", CW - 18);
+          doc.text(vLines, M + 7, y);
+          setF("normal", 7);
+          doc.setTextColor(...MUTED);
+          doc.text(`${l.seconds || 0}s`, W - M, y, { align: "right" });
+          y += vLines.length * 4 + 2.5;
+        });
+        y += 2;
+
+        // ─── ON-SCREEN TEXT ───
+        if ((v.on_screen_texts || []).length > 0) {
+          checkPage(12);
+          setF("bold", 8);
+          doc.setTextColor(106, 27, 154);
+          doc.text("ON-SCREEN TEXT", M, y);
+          y += 5;
+          (v.on_screen_texts || []).forEach(item => {
+            checkPage(8);
+            setF("normal", 9);
+            doc.setTextColor(...DARK);
+            const tLines = doc.splitTextToSize(`• ${item.text}`, CW - 14);
+            doc.text(tLines, M + 3, y);
+            setF("normal", 7);
+            doc.setTextColor(...MUTED);
+            doc.text(`${item.seconds || 0}s`, W - M, y, { align: "right" });
+            y += tLines.length * 4 + 2;
+          });
+          y += 2;
+        }
+
+        // ─── SHOT LIST ───
+        if ((v.shot_list || []).length > 0) {
+          checkPage(12);
+          setF("bold", 8);
+          doc.setTextColor(...GREEN);
+          doc.text("SHOT LIST", M, y);
+          y += 5;
+          (v.shot_list || []).forEach(s => {
+            checkPage(8);
+            const shot = typeof s === "string" ? s : s.shot;
+            const type = typeof s === "string" ? "" : s.type;
+            if (type) {
+              setF("bold", 7);
+              doc.setTextColor(...MUTED);
+              doc.text(`[${type.replace(/_/g, " ").toUpperCase()}]`, M + 3, y);
+              const tw = textW(`[${type.replace(/_/g, " ").toUpperCase()}]`, 7, "bold") + 2;
+              setF("normal", 9);
+              doc.setTextColor(...DARK);
+              const sLines = doc.splitTextToSize(shot || "", CW - tw - 5);
+              doc.text(sLines, M + 3 + tw, y);
+              y += sLines.length * 4 + 2;
+            } else {
+              setF("normal", 9);
+              doc.setTextColor(...DARK);
+              const sLines = doc.splitTextToSize(`• ${shot}`, CW - 5);
+              doc.text(sLines, M + 3, y);
+              y += sLines.length * 4 + 2;
+            }
+          });
+          y += 2;
+        }
+
+        // ─── CTA ───
+        checkPage(12);
+        setF("bold", 8);
+        doc.setTextColor(191, 54, 12);
+        doc.text("CTA", M, y);
+        y += 5;
+        setF("bold", 10);
+        doc.setTextColor(...DARK);
+        doc.text(cta.primary || (typeof v.cta === "string" ? v.cta : ""), M, y);
+        y += 5;
+        if (cta.backup) {
+          setF("normal", 8);
+          doc.setTextColor(...MUTED);
+          doc.text(`Backup: ${cta.backup}`, M, y);
+          y += 5;
+        }
+        y += 2;
+
+        // ─── AD COPY ───
+        if (ad.headline || ad.description || ad.caption) {
+          checkPage(20);
+          setF("bold", 8);
+          doc.setTextColor(...DARK);
+          doc.text("AD COPY", M, y);
+          y += 5;
+          [["Headline", ad.headline, true], ["Description", ad.description, false], ["Caption", ad.caption, false]].forEach(([lbl, val, isBold]) => {
+            if (!val) return;
+            checkPage(10);
+            setF("normal", 7);
+            doc.setTextColor(...MUTED);
+            doc.text(lbl.toUpperCase(), M, y);
+            y += 4;
+            setF(isBold ? "bold" : "normal", isBold ? 10 : 9);
+            doc.setTextColor(...DARK);
+            const adLines = doc.splitTextToSize(val, CW);
+            doc.text(adLines, M, y);
+            y += adLines.length * (isBold ? 5 : 4) + 3;
+          });
+          y += 2;
+        }
+
+        // ─── SCORE BREAKDOWN ───
+        checkPage(35);
+        doc.setFillColor(26, 21, 18);
+        doc.roundedRect(M, y, CW, 34, 2, 2, "F");
+        setF("bold", 7);
+        doc.setTextColor(180, 175, 165);
+        doc.text("SCORE BREAKDOWN", M + 4, y + 5);
+        const sbItems = [
+          ["Atentie", sb.attention, ACCENT],
+          ["Valoare", sb.value, GREEN],
+          ["Dovada", sb.proof, [255, 152, 0]],
+          ["Frictiune", sb.friction, [233, 30, 99]],
+          ["CTA", sb.cta, [33, 150, 243]],
+          ["Platforma", sb.platform_fit, [156, 39, 176]],
+        ];
+        let bx = M + 4, by = y + 9;
+        sbItems.forEach(([lbl, val, color], si) => {
+          const col = si % 3;
+          const row = Math.floor(si / 3);
+          const cx = M + 4 + col * ((CW - 8) / 3);
+          const cy = by + row * 12;
+          setF("normal", 7);
+          doc.setTextColor(180, 175, 165);
+          doc.text(lbl, cx, cy);
+          setF("bold", 7);
+          doc.setTextColor(...color);
+          doc.text(`${val || 0}`, cx + 32, cy);
+          // Mini bar
+          doc.setFillColor(60, 55, 50);
+          doc.roundedRect(cx, cy + 1.5, 50, 2, 0.5, 0.5, "F");
+          doc.setFillColor(...color);
+          doc.roundedRect(cx, cy + 1.5, Math.max(1, (val || 0) / 2), 2, 0.5, 0.5, "F");
+        });
+        y += 38;
+
+        // ─── WHY IT CONVERTS ───
+        if ((v.why_it_converts || []).length > 0) {
+          checkPage(15);
+          setF("bold", 8);
+          doc.setTextColor(...GREEN);
+          doc.text("DE CE CONVERTESTE", M, y);
+          y += 5;
+          v.why_it_converts.forEach(r => {
+            checkPage(8);
+            setF("normal", 8);
+            doc.setTextColor(...DARK);
+            const wLines = doc.splitTextToSize(`• ${r}`, CW - 3);
+            doc.text(wLines, M + 2, y);
+            y += wLines.length * 3.5 + 1.5;
+          });
+          y += 3;
+        }
+
+        // ─── WHAT TO TEST ───
+        if ((v.what_to_test || []).length > 0) {
+          checkPage(12);
+          setF("bold", 8);
+          doc.setTextColor(...MUTED);
+          doc.text("CE SA TESTEZI", M, y);
+          y += 5;
+          v.what_to_test.forEach(r => {
+            checkPage(8);
+            setF("normal", 8);
+            doc.setTextColor(...DARK);
+            const tLines = doc.splitTextToSize(`• ${r}`, CW - 3);
+            doc.text(tLines, M + 2, y);
+            y += tLines.length * 3.5 + 1.5;
+          });
+          y += 3;
+        }
+
+        // ─── POSTING TIP ───
+        if (v.posting_tip) {
+          checkPage(12);
+          setF("bold", 8);
+          doc.setTextColor(...MUTED);
+          doc.text("POSTING TIP", M, y);
+          y += 4;
+          setF("normal", 8);
+          doc.setTextColor(...DARK);
+          const pLines = doc.splitTextToSize(v.posting_tip, CW - 3);
+          doc.text(pLines, M + 2, y);
+          y += pLines.length * 3.5 + 4;
+        }
+
+        // Separator between variants
+        if (i < variants.length - 1) {
+          y += 4;
+          drawLine(y, LIGHT_BG);
+          y += 8;
+        }
       });
-      doc.save(`ScriptStudio_${offerLabel.replace(/\s+/g,"_")}.pdf`);
-    } catch(e) { alert("Eroare export: " + e.message); }
+
+      // ─── FOOTER on last page ───
+      setF("normal", 7);
+      doc.setTextColor(...MUTED);
+      doc.text("Generat cu ScriptStudio by @steph.ai.studio", W / 2, 290, { align: "center" });
+
+      doc.save(`ScriptStudio_${(offerLabel || "export").replace(/\s+/g, "_")}.pdf`);
+    } catch (e) {
+      console.error("PDF export error:", e);
+      alert("Eroare export PDF: " + e.message);
+    }
   };
 
   const sLabel = { fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: t.muted, marginBottom: 12, paddingBottom: 8, borderBottom: `1px solid ${t.border}` };
