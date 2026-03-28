@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
   try {
-    const { prompt } = req.body;
+    const { prompt, textOnly } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -21,8 +21,8 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 6000,
-        system: 'You are a JSON API. You ONLY output valid JSON. Never include markdown, backticks, explanations, or any text before or after the JSON. Start your response with { and end with }.',
+        max_tokens: textOnly ? 1000 : 6000,
+        ...(textOnly ? {} : { system: 'You are a JSON API. You ONLY output valid JSON. Never include markdown, backticks, explanations, or any text before or after the JSON. Start your response with { and end with }.' }),
         messages: [{ role: 'user', content: prompt }],
       }),
     });
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
       const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
       if (s !== -1 && e !== -1) try { parsed = JSON.parse(raw.slice(s, e + 1)); } catch (_) {}
     }
-    if (!parsed) return res.status(500).json({ error: 'Invalid JSON from AI', raw: raw.slice(0, 500) });
+    if (!parsed) return res.status(200).json({ text: raw });
 
     return res.status(200).json(parsed);
   } catch (err) {

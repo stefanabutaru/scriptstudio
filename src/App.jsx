@@ -691,6 +691,45 @@ export default function App() {
   const [avatarMaxScene, setAvatarMaxScene] = useState("60");
   const [avatarDesc, setAvatarDesc] = useState("");
   const intervalRef = useRef(null);
+  const [optimizingAudience, setOptimizingAudience] = useState(false);
+
+  const optimizeAudience = async () => {
+    if (!value.trim()) { setError("Completează propunerea de valoare mai întâi."); return; }
+    setOptimizingAudience(true);
+    setError("");
+    try {
+      const prompt = `Ești expert în marketing și segmentare de audiență pe piața română în 2026. Pe baza acestei propuneri de valoare, descrie audiența țintă IDEALĂ într-un singur paragraf concis (max 150 cuvinte).
+
+Propunere de valoare: "${value}"
+${offer ? "Ofertă: " + offer : ""}
+${category ? "Categorie: " + category : ""}
+
+Descrie SPECIFIC:
+- Vârstă, gen (dacă e relevant)
+- Ocupație / rol
+- Nivel de experiență
+- Durere principală / frustrare
+- Ce caută activ
+- Unde petrec timp online
+- Putere de cumpărare
+
+Răspunde DOAR cu textul audienței, nimic altceva. În română naturală. Un paragraf, direct, fără introduceri.`;
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, textOnly: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Eroare");
+      let text = data.text || "";
+      if (!text && data.variants) text = "";
+      if (text) setAudience(text.trim().slice(0, 500));
+      else throw new Error("Nu am primit sugestie de audiență");
+    } catch (e) {
+      setError("Eroare optimizare: " + e.message);
+    }
+    setOptimizingAudience(false);
+  };
 
   // Brand Voice Memory
   const [brandVoice, setBrandVoice] = useState(() => {
@@ -1227,7 +1266,12 @@ export default function App() {
             <FG label="Ofertă / produs" t={t}><Inp val={offer} set={setOffer} ph="ex: Cursul meu de fotografie AI" t={t} /></FG>
             <FG label="Categorie" t={t}><Sel val={category} set={setCategory} opts={CATEGORIES} t={t} /></FG>
             <FG label="Propunere de valoare" t={t}><Inp val={value} set={setValue} ph="ex: Ajut antreprenorii să creeze conținut AI în 30 min/zi" rows={2} t={t} /></FG>
-            <FG label="Audiență țintă" t={t}><Inp val={audience} set={setAudience} ph="ex: antreprenori români 25-40 ani" t={t} /></FG>
+            <FG label="Audiență țintă" t={t}>
+              <Inp val={audience} set={setAudience} ph="ex: antreprenori români 25-40 ani" rows={audience.length > 80 ? 3 : 1} t={t} />
+              <button onClick={optimizeAudience} disabled={optimizingAudience || !value.trim()} style={{ marginTop: 5, width: "100%", background: optimizingAudience ? t.muted : `${t.green}15`, border: `1px solid ${t.green}44`, borderRadius: 6, padding: "7px 10px", fontSize: 11, fontWeight: 600, color: t.green, cursor: optimizingAudience || !value.trim() ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: !value.trim() ? .4 : 1, transition: "all .2s" }}>
+                {optimizingAudience ? "⏳ Optimizăm..." : "✨ Optimizează audiența din propunerea de valoare"}
+              </button>
+            </FG>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <FG label="Stadiu" t={t}><Sel val={stage} set={setStage} opts={STAGES} t={t} /></FG>
               <FG label="Obiectiv" t={t}><Sel val={objective} set={setObjective} opts={OBJECTIVES} t={t} /></FG>
