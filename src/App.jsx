@@ -117,12 +117,20 @@ REGULI OBLIGATORII DE COPYWRITING PSIHOLOGIC:
 12. "style" trebuie RECOMANDAT de tine pentru fiecare variantă — alege cel mai potrivit stil video (talking_head, screen_recording, b_roll, mixed) în funcție de conținutul scriptului și platforma target. NU pune mereu talking_head — gândește ce stil servește cel mai bine mesajul.
 13. "captions" trebuie RECOMANDAT de tine — alege între burned_in (subtitrări integrate), auto_generated (generate automat), none (fără). Alege în funcție de platformă și stil. De exemplu: pentru TikTok cu talking_head → burned_in; pentru YouTube cu screen_recording → auto_generated.
 
-LIMBA: Română naturală, de conversație. NU traduceți din engleză. Gândește direct în română.`;
+LIMBA: Română naturală, de conversație. NU traduceți din engleză. Gândește direct în română.
+
+CONTEXT TEMPORAL — SUNTEM ÎN 2026:
+- Folosește DOAR referințe, tendințe și date actuale din 2026. NU menționa lucruri învechite.
+- Algoritmii actuali ai platformelor în 2026: Instagram și TikTok prioritizează watch time și saves, nu doar like-uri. YouTube Shorts au monetizare directă. LinkedIn favorizează conținut video nativ.
+- Formate care funcționează ACUM: hook vizual în prima secundă, subtitrări dinamice, jump cuts rapide, pattern interrupt, POV-uri, green screen cu dovezi, split-screen comparații.
+- Tendințe piața română 2026: audiența e obișnuită cu reclame și le ignoră — trebuie să arați ca conținut organic. Autenticitatea bate producția polish-uită. UGC și avatarele AI sunt mainstream.
+- Referințe de preț, statistici sau date trebuie să fie realiste pentru 2026, nu din 2022-2023.
+- "posting_tip" trebuie să reflecte algoritmii și best practices din 2026, nu sfaturi vechi.`;
 
   if (mode === "manual") {
     return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
 
-Ești cel mai bun copywriter de conversie din România. Creezi scripturi video care OPRESC scrollul și VÂND. Fiecare cuvânt are un scop psihologic precis.
+Ești cel mai bun copywriter de conversie din România în 2026. Creezi scripturi video care OPRESC scrollul și VÂND. Fiecare cuvânt are un scop psihologic precis.
 
 Generează 3 variante de script video, fiecare cu un UNGHI PSIHOLOGIC COMPLET DIFERIT.
 
@@ -145,7 +153,7 @@ ${schema}`;
   } else if (mode === "analyzer") {
     return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
 
-Ești cel mai bun copywriter de conversie din România. Analizează pagina de vânzări și extrage: promisiunea principală, dovezile sociale, obiecțiile potențiale, audiența target, tonul brandului.
+Ești cel mai bun copywriter de conversie din România în 2026. Analizează pagina de vânzări și extrage: promisiunea principală, dovezile sociale, obiecțiile potențiale, audiența target, tonul brandului.
 
 Apoi generează 3 scripturi video RADICAL DIFERITE pentru ${f.platform}, durata ${f.length}, fiecare cu alt unghi psihologic.${avatarNote}${brandVoice}
 
@@ -159,7 +167,7 @@ ${schema}`;
   } else {
     return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
 
-Ești cel mai bun copywriter de conversie din România. Analizează scriptul de mai jos: identifică ce funcționează, ce e slab, și ce oportunități psihologice lipsesc.
+Ești cel mai bun copywriter de conversie din România în 2026. Analizează scriptul de mai jos: identifică ce funcționează, ce e slab, și ce oportunități psihologice lipsesc.
 
 Apoi generează 3 variante COMPLET REIMAGINATE — nu "îmbunătățiri" ci REINTERPRETĂRI cu unghiuri psihologice diferite. ${f.platform}, ${f.length}.${avatarNote}${brandVoice}
 
@@ -480,6 +488,8 @@ export default function App() {
   const [objection, setObjection] = useState("");
   const [ctaGoal, setCtaGoal] = useState("");
   const [page, setPage] = useState("");
+  const [pageUrl, setPageUrl] = useState("");
+  const [fetchingUrl, setFetchingUrl] = useState(false);
   const [aPlatform, setAPlatform] = useState("Instagram Reels");
   const [aLength, setALength] = useState("Scurt (20-45s)");
   const [script, setScript] = useState("");
@@ -488,6 +498,31 @@ export default function App() {
 
   const [regenCount, setRegenCount] = useState(0);
   const lastPromptRef = useRef("");
+
+  const fetchPageText = async () => {
+    if (!pageUrl.trim()) return;
+    let url = pageUrl.trim();
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    setFetchingUrl(true);
+    setError("");
+    try {
+      const res = await fetch("/api/fetch-page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Eroare la extragere");
+      if (data.text) {
+        setPage(data.text);
+      } else {
+        throw new Error("Nu am putut extrage text de pe pagină");
+      }
+    } catch (e) {
+      setError("Eroare extragere pagină: " + e.message);
+    }
+    setFetchingUrl(false);
+  };
 
   const generate = async () => {
     setError("");
@@ -535,7 +570,7 @@ export default function App() {
       setVariants(v);
       setActiveIdx(0);
       if (v.length > 0) {
-        setHistory(prev => [{ label, platform: mode === "manual" ? platform : mode === "analyzer" ? aPlatform : rPlatform, objective: mode === "manual" ? objective : "—", time: new Date().toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" }), count: v.length }, ...prev].slice(0, 10));
+        setHistory(prev => [{ label, platform: mode === "manual" ? platform : mode === "analyzer" ? aPlatform : rPlatform, objective: mode === "manual" ? objective : "—", time: new Date().toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" }), count: v.length, variants: v, offerLabel: label }, ...prev].slice(0, 5));
       }
     } catch (e) {
       setError("Eroare: " + e.message);
@@ -968,7 +1003,15 @@ export default function App() {
 
           {mode === "analyzer" && <>
             <div style={sLabel}>Analizor pagină de vânzări</div>
-            <FG label="Textul paginii de vânzări" t={t}><Inp val={page} set={setPage} ph="Lipește tot textul de pe landing page..." rows={10} t={t} /></FG>
+            <FG label="URL pagină (opțional)" t={t}>
+              <div style={{ display: "flex", gap: 6 }}>
+                <input value={pageUrl} onChange={e => setPageUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && fetchPageText()} placeholder="ex: https://cursulmeu.ro/oferta" style={{ flex: 1, background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 7, padding: "9px 11px", fontFamily: "inherit", fontSize: 13, color: t.dark, outline: "none", boxSizing: "border-box" }} />
+                <button onClick={fetchPageText} disabled={fetchingUrl || !pageUrl.trim()} style={{ background: t.accent, color: "white", border: "none", borderRadius: 7, padding: "9px 12px", fontFamily: "inherit", fontSize: 11, fontWeight: 600, cursor: fetchingUrl ? "not-allowed" : "pointer", opacity: fetchingUrl || !pageUrl.trim() ? .5 : 1, whiteSpace: "nowrap" }}>
+                  {fetchingUrl ? "⏳..." : "🔗 Extrage"}
+                </button>
+              </div>
+            </FG>
+            <FG label="Textul paginii de vânzări" t={t}><Inp val={page} set={setPage} ph="Lipește textul sau folosește URL-ul de sus pentru extragere automată..." rows={10} t={t} /></FG>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <FG label="Platformă" t={t}><Sel val={aPlatform} set={setAPlatform} opts={PLATFORMS} t={t} /></FG>
               <FG label="Durată" t={t}><Sel val={aLength} set={setALength} opts={LENGTHS} t={t} /></FG>
@@ -1000,16 +1043,19 @@ export default function App() {
           {history.length > 0 && (
             <div style={{ marginTop: 20 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", ...sLabel }}>
-                <span>🕐 Recente ({history.length})</span>
+                <span>🕐 Recente ({history.length}/5)</span>
                 <button onClick={() => setHistory([])} style={{ background: "transparent", border: "none", fontSize: 10, color: t.muted, cursor: "pointer" }}>Șterge</button>
               </div>
               {history.map((h, i) => (
-                <div key={i} style={{ padding: "8px 10px", background: t.barBg, borderRadius: 6, marginBottom: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div key={i} onClick={() => { setVariants(h.variants); setOfferLabel(h.offerLabel || h.label); setActiveIdx(0); setViewMode("single"); if (window.innerWidth <= 768) setSidebarOpen(false); }} style={{ padding: "8px 10px", background: t.barBg, borderRadius: 6, marginBottom: 4, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", transition: "background .15s", border: "1px solid transparent" }} onMouseEnter={e => { e.currentTarget.style.background = t.accent + "15"; e.currentTarget.style.borderColor = t.accent + "33"; }} onMouseLeave={e => { e.currentTarget.style.background = t.barBg; e.currentTarget.style.borderColor = "transparent"; }}>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: t.dark }}>{h.label}</div>
-                    <div style={{ fontSize: 10, color: t.muted }}>{h.platform} · {h.objective}</div>
+                    <div style={{ fontSize: 10, color: t.muted }}>{h.platform} · {h.count} variante</div>
                   </div>
-                  <div style={{ fontSize: 10, color: t.muted }}>🕐 {h.time}</div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                    <div style={{ fontSize: 10, color: t.muted }}>🕐 {h.time}</div>
+                    <div style={{ fontSize: 9, color: t.accent }}>↩ Încarcă</div>
+                  </div>
                 </div>
               ))}
             </div>
