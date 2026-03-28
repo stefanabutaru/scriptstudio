@@ -82,11 +82,25 @@ function Bar({ value, color, t }) {
 function buildPrompt(mode, f) {
   const schema = `{"variants":[{"hook_name":"str","hook":"str","voiceover_lines":[{"line":"str","seconds":5}],"on_screen_texts":[{"text":"str","seconds":3}],"shot_list":[{"shot":"str","type":"talking_head|screen_recording|b_roll"}],"cta":{"primary":"str","backup":"str"},"ad_copy":{"headline":"str","description":"str","caption":"str"},"psychology_tags":{"primary":"loss_aversion","secondary":"urgency"},"conversion_score":88,"score_breakdown":{"attention":92,"value":85,"proof":80,"friction":78,"cta":90,"platform_fit":85},"why_it_converts":["reason1","reason2","reason3"],"psychology_in_action":["insight1","insight2"],"what_to_test":["test1","test2"],"posting_tip":"str","style":"talking_head","captions":"burned_in","ratio":"9:16"}]}`;
 
-  const avatarNote = f.avatarMode ? "\nIMPORTANT: Scripturile sunt pentru un AVATAR AI (nu persoană reală). Adaptează shot list-ul pentru avatar digital — fără mișcări complexe, focusează pe talking head static/semi-static, screen recordings, și text overlay. Voiceover-ul trebuie să sune natural dar concis." : "";
+  const avatarNote = f.avatarMode ? `
+IMPORTANT — AVATAR MODE ACTIV:
+Scripturile sunt pentru un AVATAR DIGITAL (nu persoană reală). Respectă aceste specificații:
+- Platformă avatar: ${f.avatarPlatform || "HeyGen"}
+- Tip avatar: ${f.avatarType || "Talking head static"}
+- Tonul vocii: ${f.avatarTone || "Conversațional"}
+- Lungime maximă per scenă: ${f.avatarMaxScene || "60"} secunde${f.avatarDesc ? "\n- Descriere avatar: " + f.avatarDesc.slice(0, 200) : ""}
+
+REGULI AVATAR:
+- Shot list-ul trebuie adaptat pentru avatar digital: talking head static/semi-static, screen recordings, text overlay, b-roll extern. NICIUN gest fizic complex.
+- Voiceover-ul trebuie să sune natural dar concis — fără pauze lungi, fără expresii care necesită mimică complexă.
+- Fiecare scenă din shot list nu trebuie să depășească ${f.avatarMaxScene || "60"}s.
+- Adaptează pentru platforma ${f.avatarPlatform || "HeyGen"}: ${f.avatarPlatform === "HeyGen" ? "suportă talking head cu gesturi limitate, screen share, templates" : f.avatarPlatform === "Synthesia" ? "suportă talking head frontal, slide-uri, screen recordings" : f.avatarPlatform === "D-ID" ? "suportă doar talking head frontal static, fără gesturi" : f.avatarPlatform === "Hedra" ? "suportă talking head cu lip sync, expresii faciale de bază" : "adaptează pentru platforma specificată"}.` : "";
   const brandVoice = f.brandVoice ? `\nBrand voice salvat: ${f.brandVoice.slice(0, 200)}` : "";
 
   if (mode === "manual") {
-    return `Ești expert copywriter pentru conversie pe piața românească. Generează 5 variante de script video pentru reclame social media, bazate pe psihologia comportamentală.
+    return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
+
+Ești expert copywriter pentru conversie pe piața românească. Generează 5 variante de script video pentru reclame social media, bazate pe psihologia comportamentală.
 
 Ofertă: ${f.offer}
 Categorie: ${f.category}
@@ -103,14 +117,18 @@ Obiectiv CTA: ${f.ctaGoal || "N/A"}${avatarNote}${brandVoice}
 IMPORTANT: Fiecare voiceover_line trebuie să aibă timing-ul în secunde. Fiecare on_screen_text la fel. Shot list-ul să specifice tipul (talking_head, screen_recording, b_roll). psychology_tags are primary și secondary (secondary poate fi null). Returnează EXCLUSIV JSON valid, fără text/markdown/backticks. 5 variante complete:
 ${schema}`;
   } else if (mode === "analyzer") {
-    return `Analizează pagina de vânzări și generează 5 scripturi video pentru ${f.platform}, durata ${f.length}, în română autentică.${avatarNote}${brandVoice}
+    return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
+
+Analizează pagina de vânzări și generează 5 scripturi video pentru ${f.platform}, durata ${f.length}, în română autentică.${avatarNote}${brandVoice}
 
 PAGINA: ${f.page.slice(0, 2000)}
 
 Returnează EXCLUSIV JSON valid, 5 variante:
 ${schema}`;
   } else {
-    return `Analizează structura și psihologia scriptului și generează 5 variante originale mai bune pentru piața română. ${f.platform}, ${f.length}.${avatarNote}${brandVoice}
+    return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
+
+Analizează structura și psihologia scriptului și generează 5 variante originale mai bune pentru piața română. ${f.platform}, ${f.length}.${avatarNote}${brandVoice}
 
 SCRIPT: ${f.script.slice(0, 1500)}
 
@@ -396,6 +414,11 @@ export default function App() {
   const [abB, setAbB] = useState(1);
   const [history, setHistory] = useState([]);
   const [avatarMode, setAvatarMode] = useState(false);
+  const [avatarPlatform, setAvatarPlatform] = useState("HeyGen");
+  const [avatarType, setAvatarType] = useState("Talking head static");
+  const [avatarTone, setAvatarTone] = useState("Conversațional");
+  const [avatarMaxScene, setAvatarMaxScene] = useState("60");
+  const [avatarDesc, setAvatarDesc] = useState("");
   const intervalRef = useRef(null);
 
   // Brand Voice Memory
@@ -430,17 +453,18 @@ export default function App() {
     setError("");
     let prompt = "", label = "";
     const bv = brandVoice;
+    const avatarFields = { avatarMode, avatarPlatform, avatarType, avatarTone, avatarMaxScene, avatarDesc };
     if (mode === "manual") {
       if (!offer || !value || !audience) { setError("Completează: ofertă, valoare și audiență."); return; }
-      prompt = buildPrompt("manual", { offer, category, value, audience, stage, objective, platform, length, proof, objection, ctaGoal, avatarMode, brandVoice: bv });
+      prompt = buildPrompt("manual", { offer, category, value, audience, stage, objective, platform, length, proof, objection, ctaGoal, brandVoice: bv, ...avatarFields });
       label = offer;
     } else if (mode === "analyzer") {
       if (!page) { setError("Lipește textul paginii de vânzări."); return; }
-      prompt = buildPrompt("analyzer", { page, platform: aPlatform, length: aLength, avatarMode, brandVoice: bv });
+      prompt = buildPrompt("analyzer", { page, platform: aPlatform, length: aLength, brandVoice: bv, ...avatarFields });
       label = "Pagină analizată";
     } else {
       if (!script) { setError("Lipește scriptul de recreat."); return; }
-      prompt = buildPrompt("recreate", { script, platform: rPlatform, length: rLength, avatarMode, brandVoice: bv });
+      prompt = buildPrompt("recreate", { script, platform: rPlatform, length: rLength, brandVoice: bv, ...avatarFields });
       label = "Recreare script";
     }
     setOfferLabel(label);
@@ -523,12 +547,30 @@ export default function App() {
             ))}
           </div>
 
-          {/* Avatar Mode Toggle */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, padding: "8px 10px", background: avatarMode ? `${t.accent}15` : t.barBg, borderRadius: 7, border: `1px solid ${avatarMode ? t.accent+"44" : t.border}` }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: t.dark }}>🤖 Avatar Mode</span>
-            <button onClick={() => setAvatarMode(!avatarMode)} style={{ width: 38, height: 20, borderRadius: 10, background: avatarMode ? t.accent : t.border, border: "none", cursor: "pointer", position: "relative", transition: "background .2s" }}>
-              <div style={{ width: 16, height: 16, borderRadius: "50%", background: "white", position: "absolute", top: 2, left: avatarMode ? 20 : 2, transition: "left .2s" }} />
-            </button>
+          {/* Avatar Mode */}
+          <div style={{ marginBottom: 16, borderRadius: 9, border: `1px solid ${avatarMode ? t.accent+"44" : t.border}`, overflow: "hidden", background: avatarMode ? `${t.accent}08` : t.barBg }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px" }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: t.dark }}>🤖 Avatar Mode</span>
+              <button onClick={() => setAvatarMode(!avatarMode)} style={{ width: 38, height: 20, borderRadius: 10, background: avatarMode ? t.accent : t.border, border: "none", cursor: "pointer", position: "relative", transition: "background .2s" }}>
+                <div style={{ width: 16, height: 16, borderRadius: "50%", background: "white", position: "absolute", top: 2, left: avatarMode ? 20 : 2, transition: "left .2s" }} />
+              </button>
+            </div>
+            {!avatarMode && (
+              <div style={{ padding: "0 12px 10px", fontSize: 11, color: t.muted, lineHeight: 1.5 }}>Activează pentru scripturi optimizate pentru avatare digitale (HeyGen, Synthesia, D-ID, Hedra)</div>
+            )}
+            {avatarMode && (
+              <div style={{ padding: "0 12px 12px", display: "grid", gap: 8 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <FG label="Platformă avatar" t={t}><Sel val={avatarPlatform} set={setAvatarPlatform} opts={["HeyGen", "Synthesia", "D-ID", "Hedra", "Alta"]} t={t} /></FG>
+                  <FG label="Tip avatar" t={t}><Sel val={avatarType} set={setAvatarType} opts={["Talking head static", "Talking head semi-static", "Full body static", "Full body cu gesturi"]} t={t} /></FG>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <FG label="Tonul vocii" t={t}><Sel val={avatarTone} set={setAvatarTone} opts={["Conversațional", "Profesional", "Energic", "Calm", "Autoritar", "Prietenos"]} t={t} /></FG>
+                  <FG label="Max secunde/scenă" t={t}><Sel val={avatarMaxScene} set={setAvatarMaxScene} opts={["30", "45", "60", "90", "120"]} t={t} /></FG>
+                </div>
+                <FG label="Descriere avatar (opțional)" t={t}><Inp val={avatarDesc} set={setAvatarDesc} ph="ex: Femeie 30 ani, păr brunet, ton profesional, fundal birou minimalist" rows={2} t={t} /></FG>
+              </div>
+            )}
           </div>
 
           {/* FORM FIELDS */}

@@ -22,6 +22,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 4096,
+        system: 'You are a JSON API. You ONLY output valid JSON. Never include markdown, backticks, explanations, or any text before or after the JSON. Start your response with { and end with }.',
         messages: [{ role: 'user', content: prompt }],
       }),
     });
@@ -34,8 +35,11 @@ export default async function handler(req, res) {
     const data = await response.json();
     let raw = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
 
+    // Strip markdown fences if present
+    raw = raw.replace(/^[\s\n]*```(?:json)?[\s\n]*/i, '').replace(/[\s\n]*```[\s\n]*$/i, '').trim();
+
     let parsed = null;
-    try { parsed = JSON.parse(raw.trim()); } catch (_) {}
+    try { parsed = JSON.parse(raw); } catch (_) {}
     if (!parsed) {
       const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
       if (s !== -1 && e !== -1) try { parsed = JSON.parse(raw.slice(s, e + 1)); } catch (_) {}
