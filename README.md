@@ -1,49 +1,31 @@
-# ScriptStudio RO 🎬
+# ScriptStudio RO v2 🎬
 
 Generator de scripturi video optimizate psihologic pentru piața română.
 **by @steph.ai.studio**
 
-## Deploy pe Vercel (5 minute)
+## Features
+- 3 moduri: Manual / Analizor pagină / Recreare script
+- 5 variante cu scor /100 și breakdown detaliat
+- Voiceover cu timing per linie
+- On-screen text cu timing
+- Shot list cu tip (talking head, screen recording, b-roll)
+- Ad Copy complet (headline, description, caption)
+- CTA principal + backup
+- Psychology tags (primary + secondary)
+- "De ce convertește" expandabil + Psychology in Action + What to Test + Posting Tip
+- Avatar Mode (scripturi optimizate pentru avatare AI)
+- A/B Compare View (comparare side by side)
+- Brand Voice Memory (salvare ton de brand)
+- Rafinare per variantă
+- Butoane Copy individuale
+- Export PDF
+- Recent history
+- Dark / Light mode
+- Interfață complet în română
 
-### 1. Pregătire
-- Cont Vercel (gratuit): [vercel.com](https://vercel.com)
-- Cont GitHub: [github.com](https://github.com)
-- API Key Anthropic: [console.anthropic.com](https://console.anthropic.com) → Settings → API Keys → Create Key
+## Deploy pe Vercel
 
-### 2. Urcă pe GitHub
-1. Creează un repository nou pe GitHub (ex: `scriptstudio`)
-2. Urcă toate fișierele din acest folder
-
-### 3. Deploy pe Vercel
-1. Mergi la [vercel.com/new](https://vercel.com/new)
-2. Importă repository-ul `scriptstudio` din GitHub
-3. **IMPORTANT** — Adaugă Environment Variable:
-   - Nume: `ANTHROPIC_API_KEY`
-   - Valoare: `sk-ant-...` (key-ul tău)
-4. Click **Deploy**
-5. Gata! Primești un URL de tipul `scriptstudio.vercel.app`
-
-### 4. Domeniu custom (opțional)
-În Vercel → Settings → Domains → adaugă domeniul tău.
-
-## Structura proiectului
-
-```
-scriptstudio/
-├── api/
-│   └── generate.js      ← Serverless function (backend → Anthropic API)
-├── src/
-│   ├── App.jsx           ← ScriptStudio UI (React)
-│   └── main.jsx          ← Entry point
-├── index.html
-├── package.json
-├── vite.config.js
-├── vercel.json
-└── .gitignore
-```
-
-## Cum funcționează
-- Frontend-ul (React) trimite brief-ul la `/api/generate`
-- Backend-ul (serverless function) face call-ul către Anthropic cu API key-ul din env
-- Rezultatul JSON se afișează în interfață
-- Utilizatorul poate rafina fiecare variantă individual
+1. Urcă fișierele pe GitHub
+2. Mergi la vercel.com/new → importă repo-ul
+3. Adaugă Environment Variable: `ANTHROPIC_API_KEY` = `sk-ant-...`
+4. Deploy!

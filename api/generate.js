@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -7,7 +6,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
+  if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
   try {
     const { prompt } = req.body;
@@ -22,27 +21,26 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 3000,
+        max_tokens: 4096,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      return res.status(response.status).json({ error: `Anthropic API: ${response.status}`, details: errText });
+      return res.status(response.status).json({ error: `Anthropic API: ${response.status}`, details: errText.slice(0, 300) });
     }
 
     const data = await response.json();
     let raw = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
 
-    // Parse JSON from response
     let parsed = null;
     try { parsed = JSON.parse(raw.trim()); } catch (_) {}
     if (!parsed) {
       const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
       if (s !== -1 && e !== -1) try { parsed = JSON.parse(raw.slice(s, e + 1)); } catch (_) {}
     }
-    if (!parsed) return res.status(500).json({ error: 'Invalid JSON from AI', raw: raw.slice(0, 300) });
+    if (!parsed) return res.status(500).json({ error: 'Invalid JSON from AI', raw: raw.slice(0, 500) });
 
     return res.status(200).json(parsed);
   } catch (err) {
