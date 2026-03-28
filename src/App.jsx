@@ -80,7 +80,7 @@ function Bar({ value, color, t }) {
 
 /* ─── PROMPT BUILDER ─── */
 function buildPrompt(mode, f) {
-  const schema = `{"variants":[{"hook_name":"str","hook":"str","voiceover_lines":[{"line":"str","seconds":5}],"on_screen_texts":[{"text":"str","seconds":3}],"shot_list":[{"shot":"str","type":"talking_head|screen_recording|b_roll"}],"cta":{"primary":"str","backup":"str"},"ad_copy":{"headline":"str","description":"str","caption":"str"},"psychology_tags":{"primary":"loss_aversion","secondary":"urgency"},"conversion_score":88,"score_breakdown":{"attention":92,"value":85,"proof":80,"friction":78,"cta":90,"platform_fit":85},"why_it_converts":["reason1","reason2","reason3"],"psychology_in_action":["insight1","insight2"],"what_to_test":["test1","test2"],"posting_tip":"str","style":"talking_head","captions":"burned_in","ratio":"9:16"}]}`;
+  const schema = `{"variants":[{"hook_name":"str","hook":"str","voiceover_lines":[{"line":"str","seconds":5}],"on_screen_texts":[{"text":"str","seconds":3}],"shot_list":[{"shot":"str","type":"talking_head"}],"cta":{"primary":"str","backup":"str"},"ad_copy":{"headline":"str","description":"str","caption":"str"},"psychology_tags":{"primary":"loss_aversion","secondary":"urgency"},"conversion_score":88,"score_breakdown":{"attention":92,"value":85,"proof":80,"friction":78,"cta":90,"platform_fit":85},"why_it_converts":["r1","r2"],"psychology_in_action":["i1"],"what_to_test":["t1"],"posting_tip":"str","style":"talking_head","captions":"burned_in","ratio":"9:16"}]}`;
 
   const avatarNote = f.avatarMode ? `
 IMPORTANT — AVATAR MODE ACTIV:
@@ -100,7 +100,7 @@ REGULI AVATAR:
   if (mode === "manual") {
     return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
 
-Ești expert copywriter pentru conversie pe piața românească. Generează 5 variante de script video pentru reclame social media, bazate pe psihologia comportamentală.
+Ești expert copywriter pentru conversie pe piața românească. Generează 3 variante de script video pentru reclame social media, bazate pe psihologia comportamentală.
 
 Ofertă: ${f.offer}
 Categorie: ${f.category}
@@ -114,25 +114,25 @@ Dovezi sociale: ${f.proof || "N/A"}
 Obiecția principală: ${f.objection || "N/A"}
 Obiectiv CTA: ${f.ctaGoal || "N/A"}${avatarNote}${brandVoice}
 
-IMPORTANT: Fiecare voiceover_line trebuie să aibă timing-ul în secunde. Fiecare on_screen_text la fel. Shot list-ul să specifice tipul (talking_head, screen_recording, b_roll). psychology_tags are primary și secondary (secondary poate fi null). Returnează EXCLUSIV JSON valid, fără text/markdown/backticks. 5 variante complete:
+IMPORTANT: Fiecare voiceover_line trebuie să aibă timing-ul în secunde. Fiecare on_screen_text la fel. Shot list-ul să specifice tipul (talking_head, screen_recording, b_roll). psychology_tags are primary și secondary (secondary poate fi null). Returnează EXCLUSIV JSON valid, fără text/markdown/backticks. 3 variante complete:
 ${schema}`;
   } else if (mode === "analyzer") {
     return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
 
-Analizează pagina de vânzări și generează 5 scripturi video pentru ${f.platform}, durata ${f.length}, în română autentică.${avatarNote}${brandVoice}
+Analizează pagina de vânzări și generează 3 scripturi video pentru ${f.platform}, durata ${f.length}, în română autentică.${avatarNote}${brandVoice}
 
 PAGINA: ${f.page.slice(0, 2000)}
 
-Returnează EXCLUSIV JSON valid, 5 variante:
+Returnează EXCLUSIV JSON valid, 3 variante:
 ${schema}`;
   } else {
     return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
 
-Analizează structura și psihologia scriptului și generează 5 variante originale mai bune pentru piața română. ${f.platform}, ${f.length}.${avatarNote}${brandVoice}
+Analizează structura și psihologia scriptului și generează 3 variante originale mai bune pentru piața română. ${f.platform}, ${f.length}.${avatarNote}${brandVoice}
 
 SCRIPT: ${f.script.slice(0, 1500)}
 
-Returnează EXCLUSIV JSON valid, 5 variante:
+Returnează EXCLUSIV JSON valid, 3 variante:
 ${schema}`;
   }
 }
@@ -620,7 +620,7 @@ export default function App() {
           {error && <div style={{ background: "rgba(192,57,43,.08)", border: "1px solid rgba(192,57,43,.25)", borderRadius: 7, padding: "9px 12px", fontSize: 12, color: "#c0392b", marginBottom: 10 }}>{error}</div>}
 
           <button onClick={generate} disabled={loading} style={{ width: "100%", background: loading ? t.muted : t.accent, color: "white", border: "none", borderRadius: 9, padding: 13, fontFamily: "inherit", fontSize: 14, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", marginTop: 6, transition: "background .2s" }}>
-            {loading ? "⏳ Generăm..." : { manual: "⚡ Generează 5 scripturi", analyzer: "🔍 Analizează și generează", recreate: "🔄 Recreează mai bine" }[mode]}
+            {loading ? "⏳ Generăm..." : { manual: "⚡ Generează 3 scripturi", analyzer: "🔍 Analizează și generează", recreate: "🔄 Recreează mai bine" }[mode]}
           </button>
 
           {/* Recent History */}
@@ -650,7 +650,7 @@ export default function App() {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", textAlign: "center", color: t.muted }}>
               <div style={{ fontSize: 52, opacity: .3, marginBottom: 18 }}>✍️</div>
               <div style={{ fontFamily: "Georgia, serif", fontSize: 24, color: t.dark, marginBottom: 8 }}>Scriptul tău perfect te așteaptă</div>
-              <div style={{ fontSize: 14, maxWidth: 380, lineHeight: 1.6 }}>Completează detaliile din stânga și generează 5 variante psihologic optimizate, cu scoring, ad copy și shot list — gata de filmat.</div>
+              <div style={{ fontSize: 14, maxWidth: 380, lineHeight: 1.6 }}>Completează detaliile din stânga și generează 3 variante psihologic optimizate, cu scoring, ad copy și shot list — gata de filmat.</div>
             </div>
           )}
 

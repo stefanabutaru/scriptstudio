@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
+        max_tokens: 6000,
         system: 'You are a JSON API. You ONLY output valid JSON. Never include markdown, backticks, explanations, or any text before or after the JSON. Start your response with { and end with }.',
         messages: [{ role: 'user', content: prompt }],
       }),
