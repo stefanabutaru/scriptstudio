@@ -101,6 +101,12 @@ REGULI AVATAR:
 - Adaptează pentru platforma ${f.avatarPlatform || "HeyGen"}: ${f.avatarPlatform === "HeyGen" ? "suportă talking head cu gesturi limitate, screen share, templates" : f.avatarPlatform === "Synthesia" ? "suportă talking head frontal, slide-uri, screen recordings" : f.avatarPlatform === "D-ID" ? "suportă doar talking head frontal static, fără gesturi" : f.avatarPlatform === "Hedra" ? "suportă talking head cu lip sync, expresii faciale de bază" : "adaptează pentru platforma specificată"}.` : "";
   const brandVoice = f.brandVoice ? `\nBrand voice salvat: ${f.brandVoice.slice(0, 200)}` : "";
 
+  // Inject historical performance data if available
+  const topPerf = typeof getTopPerformers === "function" ? getTopPerformers() : [];
+  const perfNote = topPerf.length > 0 ? `\nDATE DE PERFORMANȚĂ REALE din campaniile anterioare ale utilizatorului (FOLOSEȘTE-LE ca referință — repetă ce funcționează, evită ce nu):
+${topPerf.map((p, i) => `${i+1}. Hook: "${p.hook?.slice(0, 80)}" | Framework: ${p.framework || "?"} | Unghi: ${p.primaryTag || "?"} | Hook rate: ${p.hookRate ? p.hookRate + "%" : "?"} | CTR: ${p.ctr ? p.ctr + "%" : "?"} | Conversii: ${p.conversions ?? "?"} | Buget: ${p.spend ? p.spend + "€" : "?"}${p.notes ? " | Note: " + p.notes : ""}`).join("\n")}
+ANALIZEAZĂ pattern-urile: ce framework-uri au avut cel mai bun hook rate? Ce unghiuri psihologice au convertit cel mai bine? Folosește aceste insight-uri pentru a genera variante cu probabilitate mai mare de succes.` : "";
+
   const psychoRules = `
 REGULI OBLIGATORII DE COPYWRITING PSIHOLOGIC:
 1. FIECARE variantă TREBUIE să folosească:
@@ -174,7 +180,7 @@ Platformă: ${f.platform}
 Durată: ${f.length}
 Dovezi sociale: ${f.proof || "N/A"}
 Obiecția principală: ${f.objection || "N/A"}
-Obiectiv CTA: ${f.ctaGoal || "N/A"}${avatarNote}${brandVoice}
+Obiectiv CTA: ${f.ctaGoal || "N/A"}${avatarNote}${brandVoice}${perfNote}
 
 ${psychoRules}
 
@@ -189,7 +195,7 @@ ${f.offer ? "Ofertă: " + f.offer : ""}${f.audience ? "\nAudiență: " + f.audie
 
 Ești cel mai bun copywriter de conversie din România în 2026. Analizează pagina de vânzări și extrage: promisiunea principală, dovezile sociale, obiecțiile potențiale, audiența target, tonul brandului.
 
-Apoi generează 3 scripturi video RADICAL DIFERITE pentru ${f.platform}, durata ${f.length}, fiecare cu alt unghi psihologic.${avatarNote}${brandVoice}
+Apoi generează 3 scripturi video RADICAL DIFERITE pentru ${f.platform}, durata ${f.length}, fiecare cu alt unghi psihologic.${avatarNote}${brandVoice}${perfNote}
 ${ctxNote}
 PAGINA DE VÂNZĂRI:
 ${f.page.slice(0, 15000)}
@@ -215,7 +221,7 @@ ${f.ctaGoal ? "Obiectiv CTA: " + f.ctaGoal : ""}`.replace(/\n\n+/g, "\n") : "";
 
 Ești cel mai bun copywriter de conversie din România în 2026. Analizează scriptul de mai jos: identifică ce funcționează, ce e slab, și ce oportunități psihologice lipsesc.
 
-Apoi generează 3 variante COMPLET REIMAGINATE — nu "îmbunătățiri" ci REINTERPRETĂRI cu unghiuri psihologice diferite. ${f.platform}, ${f.length}.${avatarNote}${brandVoice}
+Apoi generează 3 variante COMPLET REIMAGINATE — nu "îmbunătățiri" ci REINTERPRETĂRI cu unghiuri psihologice diferite. ${f.platform}, ${f.length}.${avatarNote}${brandVoice}${perfNote}
 ${contextNote}
 SCRIPTUL ORIGINAL:
 ${f.script.slice(0, 3000)}
@@ -446,12 +452,115 @@ function VariantCard({ v, idx, t, onRefine }) {
       </div>
 
       {/* Refine */}
-      <div style={{ margin: "0 22px 22px", display: "flex", gap: 7 }}>
+      <div style={{ margin: "0 22px 12px", display: "flex", gap: 7 }}>
         <input value={refText} onChange={e => setRefText(e.target.value)} onKeyDown={e => e.key === "Enter" && doRefine()} placeholder="Rafinează varianta... ex: 'fă hook-ul mai agresiv'" style={{ flex: 1, background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 7, padding: "9px 12px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none" }} />
         <button onClick={doRefine} disabled={refining} style={{ background: t.accent, color: "white", border: "none", borderRadius: 7, padding: "9px 14px", fontFamily: "inherit", fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: refining ? .5 : 1 }}>
           {refining ? "..." : "✨ Rafinează"}
         </button>
       </div>
+
+      {/* Performance Feedback */}
+      <FeedbackPanel v={v} idx={idx} t={t} />
+    </div>
+  );
+}
+
+/* ─── PERFORMANCE FEEDBACK ─── */
+function getPerformanceLog() {
+  try { return JSON.parse(window.localStorage?.getItem("ss_perf_log") || "[]"); } catch(_) { return []; }
+}
+function savePerformanceLog(log) {
+  try { window.localStorage?.setItem("ss_perf_log", JSON.stringify(log.slice(0, 20))); } catch(_) {}
+}
+function getTopPerformers() {
+  const log = getPerformanceLog();
+  return log.filter(e => e.hookRate || e.ctr || e.conversions).sort((a, b) => (b.hookRate || 0) - (a.hookRate || 0)).slice(0, 5);
+}
+
+function FeedbackPanel({ v, idx, t }) {
+  const [open, setOpen] = useState(false);
+  const [hookRate, setHookRate] = useState("");
+  const [ctr, setCtr] = useState("");
+  const [conversions, setConversions] = useState("");
+  const [spend, setSpend] = useState("");
+  const [notes, setNotes] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  const hookId = (v.hook || "").slice(0, 50);
+  
+  // Check if already saved
+  useEffect(() => {
+    const log = getPerformanceLog();
+    const existing = log.find(e => e.hookId === hookId);
+    if (existing) {
+      setHookRate(existing.hookRate || "");
+      setCtr(existing.ctr || "");
+      setConversions(existing.conversions || "");
+      setSpend(existing.spend || "");
+      setNotes(existing.notes || "");
+      setSaved(true);
+    }
+  }, [hookId]);
+
+  const save = () => {
+    if (!hookRate && !ctr && !conversions) return;
+    const log = getPerformanceLog();
+    const entry = {
+      hookId,
+      hook: v.hook,
+      framework: v.framework || "",
+      hookName: v.hook_name || "",
+      primaryTag: v.psychology_tags?.primary || "",
+      score: v.conversion_score,
+      hookRate: hookRate ? parseFloat(hookRate) : null,
+      ctr: ctr ? parseFloat(ctr) : null,
+      conversions: conversions ? parseInt(conversions) : null,
+      spend: spend ? parseFloat(spend) : null,
+      notes,
+      date: new Date().toISOString().slice(0, 10),
+    };
+    const idx = log.findIndex(e => e.hookId === hookId);
+    if (idx >= 0) log[idx] = entry; else log.unshift(entry);
+    savePerformanceLog(log);
+    setSaved(true);
+  };
+
+  return (
+    <div style={{ margin: "0 22px 22px" }}>
+      <button onClick={() => setOpen(!open)} style={{ width: "100%", background: saved ? `${t.green}12` : "transparent", border: `1px solid ${saved ? t.green + "44" : t.border}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: "inherit" }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: saved ? t.green : t.dark }}>{saved ? "✅ Performanță salvată" : "📊 Marchează performanța"}</span>
+        <span style={{ fontSize: 10, color: t.muted }}>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div style={{ marginTop: 8, padding: 14, background: t.barBg, borderRadius: 8, display: "grid", gap: 8 }}>
+          <div style={{ fontSize: 10, color: t.muted, lineHeight: 1.5 }}>Completează după ce publici scriptul. Datele ajută la generările viitoare.</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: t.muted, marginBottom: 3, textTransform: "uppercase", letterSpacing: ".06em" }}>Hook rate %</div>
+              <input value={hookRate} onChange={e => setHookRate(e.target.value)} placeholder="ex: 45" type="number" step="0.1" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "7px 10px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: t.muted, marginBottom: 3, textTransform: "uppercase", letterSpacing: ".06em" }}>CTR %</div>
+              <input value={ctr} onChange={e => setCtr(e.target.value)} placeholder="ex: 2.4" type="number" step="0.01" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "7px 10px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: t.muted, marginBottom: 3, textTransform: "uppercase", letterSpacing: ".06em" }}>Conversii</div>
+              <input value={conversions} onChange={e => setConversions(e.target.value)} placeholder="ex: 12" type="number" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "7px 10px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: t.muted, marginBottom: 3, textTransform: "uppercase", letterSpacing: ".06em" }}>Buget cheltuit</div>
+              <input value={spend} onChange={e => setSpend(e.target.value)} placeholder="ex: 150" type="number" step="0.01" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "7px 10px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none", boxSizing: "border-box" }} />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: t.muted, marginBottom: 3, textTransform: "uppercase", letterSpacing: ".06em" }}>Note (opțional)</div>
+            <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="ex: A mers foarte bine pe femei 25-35" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, padding: "7px 10px", fontFamily: "inherit", fontSize: 12, color: t.dark, outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <button onClick={save} style={{ background: t.green, color: "white", border: "none", borderRadius: 7, padding: "9px 14px", fontFamily: "inherit", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            {saved ? "🔄 Actualizează" : "💾 Salvează performanța"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
