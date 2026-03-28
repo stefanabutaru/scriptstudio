@@ -51,7 +51,7 @@ function Inp({ val, set, ph, rows, t }) {
 
 function Sel({ val, set, opts, t }) {
   return <select value={val} onChange={e => set(e.target.value)} style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 7, padding: "9px 11px", fontFamily: "inherit", fontSize: 13, color: t.dark, outline: "none", appearance: "none", boxSizing: "border-box" }}>
-    {opts.map(o => <option key={o} value={o}>{o}</option>)}
+    {opts.map(o => typeof o === "string" ? <option key={o} value={o}>{o}</option> : <option key={o.value} value={o.value}>{o.label}</option>)}
   </select>;
 }
 
@@ -79,6 +79,9 @@ function Bar({ value, color, t }) {
   </div>;
 }
 
+const STYLE_LABELS = { talking_head: "Talking head", screen_recording: "Înregistrare ecran", b_roll: "B-roll", mixed: "Mixt" };
+const CAPTION_LABELS = { burned_in: "Integrate în video", auto_generated: "Generate automat", none: "Fără" };
+
 /* ─── PROMPT BUILDER ─── */
 function buildPrompt(mode, f) {
   const schema = `{"variants":[{"hook_name":"str","hook":"str","voiceover_lines":[{"line":"str","seconds":5}],"on_screen_texts":[{"text":"str","seconds":3}],"shot_list":[{"shot":"str","type":"talking_head"}],"cta":{"primary":"str","backup":"str"},"ad_copy":{"headline":"str","description":"str","caption":"str"},"psychology_tags":{"primary":"loss_aversion","secondary":"urgency"},"conversion_score":88,"score_breakdown":{"attention":92,"value":85,"proof":80,"friction":78,"cta":90,"platform_fit":85},"why_it_converts":["r1","r2"],"psychology_in_action":["i1"],"what_to_test":["t1"],"posting_tip":"str","style":"talking_head","captions":"burned_in","ratio":"9:16"}]}`;
@@ -98,10 +101,30 @@ REGULI AVATAR:
 - Adaptează pentru platforma ${f.avatarPlatform || "HeyGen"}: ${f.avatarPlatform === "HeyGen" ? "suportă talking head cu gesturi limitate, screen share, templates" : f.avatarPlatform === "Synthesia" ? "suportă talking head frontal, slide-uri, screen recordings" : f.avatarPlatform === "D-ID" ? "suportă doar talking head frontal static, fără gesturi" : f.avatarPlatform === "Hedra" ? "suportă talking head cu lip sync, expresii faciale de bază" : "adaptează pentru platforma specificată"}.` : "";
   const brandVoice = f.brandVoice ? `\nBrand voice salvat: ${f.brandVoice.slice(0, 200)}` : "";
 
+  const psychoRules = `
+REGULI OBLIGATORII DE COPYWRITING PSIHOLOGIC:
+1. FIECARE variantă TREBUIE să folosească un unghi psihologic DIFERIT. Alege din: aversiunea la pierdere, dovadă socială, autoritate, urgență, gap de curiozitate, identitate, FOMO, reciprocitate, raritate, ancorare preț, cost al inacțiunii.
+2. Hook-ul este totul — primele 3 secunde decid dacă omul se oprește din scroll. Hook-ul trebuie să LOVEASCĂ emoțional: fie cu o întrebare provocatoare, fie cu un fapt șocant, fie cu o contradicție, fie cu o promisiune concretă.
+3. Voiceover-ul trebuie scris în ROMÂNĂ AUTENTICĂ — așa cum vorbesc oamenii în viața reală. Nu limba de lemn corporatistă. Folosește "tu" direct, propoziții scurte, ritmul conversației naturale. Exemplu bun: "Știi momentul ăla când..." NU "Ați observat vreodată că..."
+4. Fiecare linie de voiceover trebuie să aibă un SCOP clar: hook → problemă → agitare → soluție → dovadă → CTA. Nu umple cu cuvinte goale.
+5. On-screen text-ul trebuie să fie PUNCHLINES scurte care amplifică mesajul vocal — nu transcrierea voiceover-ului. Max 5-7 cuvinte per text.
+6. CTA-ul trebuie să fie SPECIFIC și să creeze urgență sau curiozitate: "Linkul e în bio — doar azi" NU "Click pe link".
+7. Ad copy-ul (headline, description, caption) trebuie scris separat de script — sunt texte pentru platforma de ads, nu voiceover.
+8. "why_it_converts" trebuie să explice CONCRET ce principiu psihologic e aplicat și DE CE funcționează pe audiența target.
+9. "psychology_in_action" trebuie să arate exact UNDE în script se aplică fiecare principiu.
+10. "what_to_test" trebuie să sugereze teste A/B CONCRETE și acționabile.
+11. "posting_tip" trebuie să fie sfat PRACTIC de postare (ora, hashtag-uri, format).
+12. "style" trebuie RECOMANDAT de tine pentru fiecare variantă — alege cel mai potrivit stil video (talking_head, screen_recording, b_roll, mixed) în funcție de conținutul scriptului și platforma target. NU pune mereu talking_head — gândește ce stil servește cel mai bine mesajul.
+13. "captions" trebuie RECOMANDAT de tine — alege între burned_in (subtitrări integrate), auto_generated (generate automat), none (fără). Alege în funcție de platformă și stil. De exemplu: pentru TikTok cu talking_head → burned_in; pentru YouTube cu screen_recording → auto_generated.
+
+LIMBA: Română naturală, de conversație. NU traduceți din engleză. Gândește direct în română.`;
+
   if (mode === "manual") {
     return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
 
-Ești expert copywriter pentru conversie pe piața românească. Generează 3 variante de script video pentru reclame social media, bazate pe psihologia comportamentală.
+Ești cel mai bun copywriter de conversie din România. Creezi scripturi video care OPRESC scrollul și VÂND. Fiecare cuvânt are un scop psihologic precis.
+
+Generează 3 variante de script video, fiecare cu un UNGHI PSIHOLOGIC COMPLET DIFERIT.
 
 Ofertă: ${f.offer}
 Categorie: ${f.category}
@@ -115,23 +138,35 @@ Dovezi sociale: ${f.proof || "N/A"}
 Obiecția principală: ${f.objection || "N/A"}
 Obiectiv CTA: ${f.ctaGoal || "N/A"}${avatarNote}${brandVoice}
 
-IMPORTANT: Fiecare voiceover_line trebuie să aibă timing-ul în secunde. Fiecare on_screen_text la fel. Shot list-ul să specifice tipul (talking_head, screen_recording, b_roll). psychology_tags are primary și secondary (secondary poate fi null). Returnează EXCLUSIV JSON valid, fără text/markdown/backticks. 3 variante complete:
+${psychoRules}
+
+IMPORTANT TEHNIC: Fiecare voiceover_line cu timing (seconds). Fiecare on_screen_text cu timing. Shot list cu type (talking_head, screen_recording, b_roll). psychology_tags cu primary și secondary (secondary poate fi null). Returnează EXCLUSIV JSON valid, 3 variante complete:
 ${schema}`;
   } else if (mode === "analyzer") {
     return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
 
-Analizează pagina de vânzări și generează 3 scripturi video pentru ${f.platform}, durata ${f.length}, în română autentică.${avatarNote}${brandVoice}
+Ești cel mai bun copywriter de conversie din România. Analizează pagina de vânzări și extrage: promisiunea principală, dovezile sociale, obiecțiile potențiale, audiența target, tonul brandului.
 
-PAGINA: ${f.page.slice(0, 2000)}
+Apoi generează 3 scripturi video RADICAL DIFERITE pentru ${f.platform}, durata ${f.length}, fiecare cu alt unghi psihologic.${avatarNote}${brandVoice}
+
+PAGINA DE VÂNZĂRI:
+${f.page.slice(0, 2000)}
+
+${psychoRules}
 
 Returnează EXCLUSIV JSON valid, 3 variante:
 ${schema}`;
   } else {
     return `RĂSPUNDE DOAR CU JSON VALID. Niciun text înainte sau după. Niciun markdown. Începe cu { și termină cu }.
 
-Analizează structura și psihologia scriptului și generează 3 variante originale mai bune pentru piața română. ${f.platform}, ${f.length}.${avatarNote}${brandVoice}
+Ești cel mai bun copywriter de conversie din România. Analizează scriptul de mai jos: identifică ce funcționează, ce e slab, și ce oportunități psihologice lipsesc.
 
-SCRIPT: ${f.script.slice(0, 1500)}
+Apoi generează 3 variante COMPLET REIMAGINATE — nu "îmbunătățiri" ci REINTERPRETĂRI cu unghiuri psihologice diferite. ${f.platform}, ${f.length}.${avatarNote}${brandVoice}
+
+SCRIPTUL ORIGINAL:
+${f.script.slice(0, 1500)}
+
+${psychoRules}
 
 Returnează EXCLUSIV JSON valid, 3 variante:
 ${schema}`;
@@ -184,7 +219,7 @@ function VariantCard({ v, idx, t, onRefine }) {
     setRefining(false);
   };
 
-  const allText = `HOOK: ${v.hook}\n\nVOICEOVER:\n${(v.voiceover_lines||[]).map((l,i)=>`${i+1}. ${l.line}`).join("\n")}\n\nON-SCREEN TEXT:\n${(v.on_screen_texts||[]).map(t=>t.text).join("\n")}\n\nSHOT LIST:\n${(v.shot_list||[]).map(s=>typeof s==="string"?s:s.shot).join("\n")}\n\nCTA: ${cta.primary||v.cta}\n\nAD COPY:\nHeadline: ${ad.headline||""}\nDescription: ${ad.description||""}\nCaption: ${ad.caption||""}`;
+  const allText = `HOOK: ${v.hook}\n\nSCRIPT VOICEOVER:\n${(v.voiceover_lines||[]).map((l,i)=>`${i+1}. ${l.line}`).join("\n")}\n\nTEXT PE ECRAN:\n${(v.on_screen_texts||[]).map(t=>t.text).join("\n")}\n\nLISTA CADRE:\n${(v.shot_list||[]).map(s=>typeof s==="string"?s:s.shot).join("\n")}\n\nCTA: ${cta.primary||v.cta}\n\nTEXT RECLAMĂ:\nTitlu: ${ad.headline||""}\nDescriere: ${ad.description||""}\nCaption: ${ad.caption||""}`;
 
   const scoreItems = [
     ["attention", "Atenție & Claritate", t.accent],
@@ -199,14 +234,14 @@ function VariantCard({ v, idx, t, onRefine }) {
     <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, overflow: "hidden" }}>
       {/* Header: meta info */}
       <div style={{ padding: "10px 22px", borderBottom: `1px solid ${t.border}`, display: "flex", gap: 12, fontSize: 11, color: t.muted, flexWrap: "wrap", alignItems: "center" }}>
-        <span>Style: <strong>{v.style || "mixed"}</strong></span>
-        <span>Captions: <strong>{v.captions || "burned_in"}</strong></span>
-        <span>Ratio: <strong>{v.ratio || "9:16"}</strong></span>
+        <span>Stil: <strong>{STYLE_LABELS[v.style] || v.style || "Mixt"}</strong></span>
+        <span>Subtitrări: <strong>{CAPTION_LABELS[v.captions] || v.captions || "Integrate în video"}</strong></span>
+        <span>Format: <strong>{v.ratio || "9:16"}</strong></span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
-          <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: ".08em" }}>Primary:</span>
+          <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: ".08em" }}>Primar:</span>
           <span style={{ background: (TAG_CSS[pt.primary]||{}).b || t.accent, color: "white", fontSize: 9, padding: "2px 8px", borderRadius: 4, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", fontFamily: "monospace" }}>{TAG_LABELS[pt.primary] || pt.primary || "—"}</span>
           {pt.secondary && <>
-            <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: ".08em" }}>Secondary:</span>
+            <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: ".08em" }}>Secundar:</span>
             <span style={{ background: (TAG_CSS[pt.secondary]||{}).b || t.muted, color: "white", fontSize: 9, padding: "2px 8px", borderRadius: 4, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", fontFamily: "monospace" }}>{TAG_LABELS[pt.secondary] || pt.secondary}</span>
           </>}
         </div>
@@ -219,7 +254,7 @@ function VariantCard({ v, idx, t, onRefine }) {
           <div style={{ fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 700, lineHeight: 1.35, color: t.dark }}>{v.hook}</div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <CopyBtn text={v.hook} label="Hook" t={t} />
+          <CopyBtn text={v.hook} label="Copiază" t={t} />
           <div style={{ width: 56, height: 56, borderRadius: "50%", border: `3px solid ${t.accent}`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
             <div style={{ fontSize: 18, fontWeight: 700, color: t.accent, lineHeight: 1 }}>{v.conversion_score}</div>
             <div style={{ fontSize: 7, color: t.muted, textTransform: "uppercase" }}>scor</div>
@@ -230,8 +265,8 @@ function VariantCard({ v, idx, t, onRefine }) {
       {/* Voiceover Script */}
       <div style={{ padding: "16px 22px", borderBottom: `1px solid ${t.border}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "#1565C0", fontWeight: 700 }}>VOICEOVER SCRIPT</div>
-          <CopyBtn text={(v.voiceover_lines||[]).map(l=>l.line).join("\n")} label="Script" t={t} />
+          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "#1565C0", fontWeight: 700 }}>SCRIPT VOICEOVER</div>
+          <CopyBtn text={(v.voiceover_lines||[]).map(l=>l.line).join("\n")} label="Copiază" t={t} />
         </div>
         {(v.voiceover_lines || []).map((l, i) => (
           <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6, alignItems: "flex-start" }}>
@@ -245,8 +280,8 @@ function VariantCard({ v, idx, t, onRefine }) {
       {/* On-Screen Text */}
       <div style={{ padding: "16px 22px", borderBottom: `1px solid ${t.border}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "#6A1B9A", fontWeight: 700 }}>ON-SCREEN TEXT</div>
-          <CopyBtn text={(v.on_screen_texts||[]).map(t=>t.text).join("\n")} label="Text" t={t} />
+          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "#6A1B9A", fontWeight: 700 }}>TEXT PE ECRAN</div>
+          <CopyBtn text={(v.on_screen_texts||[]).map(t=>t.text).join("\n")} label="Copiază" t={t} />
         </div>
         {(v.on_screen_texts || []).map((item, i) => (
           <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 5, alignItems: "center" }}>
@@ -259,8 +294,8 @@ function VariantCard({ v, idx, t, onRefine }) {
       {/* Shot List */}
       <div style={{ padding: "16px 22px", borderBottom: `1px solid ${t.border}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: t.green, fontWeight: 700 }}>SHOT LIST</div>
-          <CopyBtn text={(v.shot_list||[]).map(s=>typeof s==="string"?s:`${s.type}: ${s.shot}`).join("\n")} label="Shots" t={t} />
+          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: t.green, fontWeight: 700 }}>LISTA CADRE</div>
+          <CopyBtn text={(v.shot_list||[]).map(s=>typeof s==="string"?s:`${s.type}: ${s.shot}`).join("\n")} label="Copiază" t={t} />
         </div>
         {(v.shot_list || []).map((s, i) => {
           const shot = typeof s === "string" ? s : s.shot;
@@ -280,29 +315,29 @@ function VariantCard({ v, idx, t, onRefine }) {
       <div style={{ padding: "16px 22px", borderBottom: `1px solid ${t.border}` }}>
         <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "#BF360C", fontWeight: 700, marginBottom: 8 }}>CTA</div>
         <div style={{ fontSize: 14, fontWeight: 700, color: t.dark, marginBottom: 4 }}>{cta.primary || (typeof v.cta === "string" ? v.cta : "")}</div>
-        {cta.backup && <div style={{ fontSize: 12, color: t.muted }}>Backup: {cta.backup}</div>}
+        {cta.backup && <div style={{ fontSize: 12, color: t.muted }}>Alternativ: {cta.backup}</div>}
       </div>
 
       {/* Ad Copy */}
       <div style={{ padding: "16px 22px", borderBottom: `1px solid ${t.border}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: t.dark, fontWeight: 700 }}>AD COPY</div>
-          <CopyBtn text={`${ad.headline||""}\n\n${ad.description||""}\n\n${ad.caption||""}`} label="All Ad Copy" t={t} />
+          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: t.dark, fontWeight: 700 }}>TEXT RECLAMĂ</div>
+          <CopyBtn text={`${ad.headline||""}\n\n${ad.description||""}\n\n${ad.caption||""}`} label="Copiază tot" t={t} />
         </div>
-        {[["HEADLINE", ad.headline], ["DESCRIPTION", ad.description], ["CAPTION", ad.caption]].map(([lbl, val]) => val ? (
+        {[["TITLU", ad.headline], ["DESCRIERE", ad.description], ["CAPTION", ad.caption]].map(([lbl, val]) => val ? (
           <div key={lbl} style={{ marginBottom: 10 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
               <span style={{ fontSize: 9, color: t.muted, letterSpacing: ".08em", textTransform: "uppercase" }}>{lbl}</span>
-              <CopyBtn text={val} label={lbl.slice(0,4)} t={t} />
+              <CopyBtn text={val} label="Copiază" t={t} />
             </div>
-            <div style={{ fontSize: lbl === "HEADLINE" ? 15 : 13, fontWeight: lbl === "HEADLINE" ? 700 : 400, color: t.dark, lineHeight: 1.5 }}>{val}</div>
+            <div style={{ fontSize: lbl === "TITLU" ? 15 : 13, fontWeight: lbl === "TITLU" ? 700 : 400, color: t.dark, lineHeight: 1.5 }}>{val}</div>
           </div>
         ) : null)}
       </div>
 
       {/* Score Breakdown */}
       <div style={{ background: t.scoreBg, margin: "0 22px 16px", borderRadius: 11, padding: "16px 20px", marginTop: 16 }}>
-        <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: t.scoreText, marginBottom: 14 }}>SCORE BREAKDOWN</div>
+        <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: t.scoreText, marginBottom: 14 }}>DETALII SCOR</div>
         {scoreItems.map(([k, l, color]) => (
           <div key={k} style={{ marginBottom: 10 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
@@ -325,28 +360,28 @@ function VariantCard({ v, idx, t, onRefine }) {
             {/* Why */}
             {(v.why_it_converts || []).length > 0 && (
               <div style={{ background: `${t.green}11`, border: `1px solid ${t.green}33`, borderRadius: 8, padding: 12 }}>
-                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: t.green, marginBottom: 6 }}>WHY THIS CONVERTS</div>
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: t.green, marginBottom: 6 }}>DE CE CONVERTEȘTE</div>
                 {v.why_it_converts.map((r, i) => <div key={i} style={{ fontSize: 12, lineHeight: 1.6, color: t.dark, marginBottom: 3 }}>• {r}</div>)}
               </div>
             )}
             {/* Psychology in Action */}
             {(v.psychology_in_action || []).length > 0 && (
               <div style={{ background: `${t.accent}11`, border: `1px solid ${t.accent}33`, borderRadius: 8, padding: 12 }}>
-                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: t.accent, marginBottom: 6 }}>PSYCHOLOGY IN ACTION</div>
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: t.accent, marginBottom: 6 }}>PSIHOLOGIE ÎN ACȚIUNE</div>
                 {v.psychology_in_action.map((r, i) => <div key={i} style={{ fontSize: 12, lineHeight: 1.6, color: t.dark, marginBottom: 3 }}>• {r}</div>)}
               </div>
             )}
             {/* What to Test */}
             {(v.what_to_test || []).length > 0 && (
               <div style={{ background: t.barBg, borderRadius: 8, padding: 12 }}>
-                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: t.muted, marginBottom: 6 }}>⚠️ WHAT TO TEST NEXT</div>
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: t.muted, marginBottom: 6 }}>⚠️ CE SĂ TESTEZI</div>
                 {v.what_to_test.map((r, i) => <div key={i} style={{ fontSize: 12, lineHeight: 1.6, color: t.dark, marginBottom: 3 }}>• {r}</div>)}
               </div>
             )}
             {/* Posting Tip */}
             {v.posting_tip && (
               <div style={{ background: t.barBg, borderRadius: 8, padding: 12 }}>
-                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: t.muted, marginBottom: 6 }}>💡 POSTING TIP</div>
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: t.muted, marginBottom: 6 }}>💡 TIP POSTARE</div>
                 <div style={{ fontSize: 12, lineHeight: 1.6, color: t.dark }}>{v.posting_tip}</div>
               </div>
             )}
@@ -373,10 +408,10 @@ function ABView({ variants, idxA, idxB, t }) {
     ["Hook", a.hook, b.hook],
     ["Scor", a.conversion_score, b.conversion_score],
     ["CTA", a.cta?.primary || a.cta, b.cta?.primary || b.cta],
-    ["Primary Tag", TAG_LABELS[a.psychology_tags?.primary] || "—", TAG_LABELS[b.psychology_tags?.primary] || "—"],
+    ["Tag primar", TAG_LABELS[a.psychology_tags?.primary] || "—", TAG_LABELS[b.psychology_tags?.primary] || "—"],
   ];
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+    <div className="ss-ab-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
       {[a, b].map((v, i) => (
         <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 18 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: t.accent, marginBottom: 6 }}>Variantă {String.fromCharCode(65 + (i === 0 ? idxA : idxB))}</div>
@@ -384,8 +419,8 @@ function ABView({ variants, idxA, idxB, t }) {
           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", border: `3px solid ${t.accent}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: t.accent }}>{v.conversion_score}</div>
             <div style={{ fontSize: 11, color: t.muted }}>
-              <div>Primary: {TAG_LABELS[v.psychology_tags?.primary] || "—"}</div>
-              <div>Secondary: {TAG_LABELS[v.psychology_tags?.secondary] || "—"}</div>
+              <div>Primar: {TAG_LABELS[v.psychology_tags?.primary] || "—"}</div>
+              <div>Secundar: {TAG_LABELS[v.psychology_tags?.secondary] || "—"}</div>
             </div>
           </div>
           <div style={{ fontSize: 12, color: t.dark, lineHeight: 1.6, marginBottom: 8 }}>
@@ -401,6 +436,7 @@ function ABView({ variants, idxA, idxB, t }) {
 /* ─── MAIN APP ─── */
 export default function App() {
   const [dark, setDark] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(typeof window !== "undefined" && window.innerWidth > 768);
   const t = dark ? DARK : LIGHT;
 
   const [mode, setMode] = useState("manual");
@@ -450,6 +486,9 @@ export default function App() {
   const [rPlatform, setRPlatform] = useState("Instagram Reels");
   const [rLength, setRLength] = useState("Scurt (20-45s)");
 
+  const [regenCount, setRegenCount] = useState(0);
+  const lastPromptRef = useRef("");
+
   const generate = async () => {
     setError("");
     let prompt = "", label = "";
@@ -468,7 +507,23 @@ export default function App() {
       prompt = buildPrompt("recreate", { script, platform: rPlatform, length: rLength, brandVoice: bv, ...avatarFields });
       label = "Recreare script";
     }
+    lastPromptRef.current = prompt;
     setOfferLabel(label);
+    setRegenCount(0);
+    await _runGenerate(prompt, label);
+  };
+
+  const regenerate = async () => {
+    if (!lastPromptRef.current) return;
+    const rc = regenCount + 1;
+    setRegenCount(rc);
+    const oldHooks = variants.map(v => v.hook).filter(Boolean).join(" | ");
+    const regenPrompt = lastPromptRef.current + `\n\nATENȚIE — REGENERARE #${rc}: Aceasta este o REGENERARE. Trebuie să generezi 3 variante COMPLET DIFERITE față de generarea anterioară. NU repeta unghiuri, hook-uri sau structuri similare.\n\nHook-urile anterioare (NU le repeta, nu le parafrazează, nu folosești aceeași structură):\n${oldHooks}\n\nFolosește unghiuri psihologice complet diferite. Exemple de variație: dacă anterior ai folosit frică, acum folosește curiozitate sau identitate. Dacă ai folosit dovadă socială, acum folosește urgență sau reciprocitate. Fii RADICAL DIFERIT.\n\nSeed aleator: ${Date.now()}`;
+    await _runGenerate(regenPrompt, offerLabel);
+  };
+
+  const _runGenerate = async (prompt, label) => {
+    if (window.innerWidth <= 768) setSidebarOpen(false);
     setLoading(true);
     setVariants([]);
     setViewMode("single");
@@ -565,7 +620,7 @@ export default function App() {
         if (pt.primary) {
           setF("normal", 8);
           doc.setTextColor(...MUTED);
-          const tagLine = `Primary: ${TAG_LABELS[pt.primary] || pt.primary}${pt.secondary ? "  |  Secondary: " + (TAG_LABELS[pt.secondary] || pt.secondary) : ""}`;
+          const tagLine = `Primar: ${TAG_LABELS[pt.primary] || pt.primary}${pt.secondary ? "  |  Secundar: " + (TAG_LABELS[pt.secondary] || pt.secondary) : ""}`;
           doc.text(tagLine, M, y);
           y += 5;
         }
@@ -573,7 +628,7 @@ export default function App() {
         // Style / Captions / Ratio
         setF("normal", 7);
         doc.setTextColor(...MUTED);
-        doc.text(`Style: ${v.style || "mixed"}  |  Captions: ${v.captions || "burned_in"}  |  Ratio: ${v.ratio || "9:16"}`, M, y);
+        doc.text(`Stil: ${STYLE_LABELS[v.style] || v.style || "Mixt"}  |  Subtitrări: ${CAPTION_LABELS[v.captions] || v.captions || "Integrate în video"}  |  Format: ${v.ratio || "9:16"}`, M, y);
         y += 7;
 
         // ─── HOOK ───
@@ -592,7 +647,7 @@ export default function App() {
         checkPage(15);
         setF("bold", 8);
         doc.setTextColor(21, 101, 192);
-        doc.text("VOICEOVER SCRIPT", M, y);
+        doc.text("SCRIPT VOICEOVER", M, y);
         y += 5;
         (v.voiceover_lines || []).forEach((l, li) => {
           checkPage(10);
@@ -615,7 +670,7 @@ export default function App() {
           checkPage(12);
           setF("bold", 8);
           doc.setTextColor(106, 27, 154);
-          doc.text("ON-SCREEN TEXT", M, y);
+          doc.text("TEXT PE ECRAN", M, y);
           y += 5;
           (v.on_screen_texts || []).forEach(item => {
             checkPage(8);
@@ -636,7 +691,7 @@ export default function App() {
           checkPage(12);
           setF("bold", 8);
           doc.setTextColor(...GREEN);
-          doc.text("SHOT LIST", M, y);
+          doc.text("LISTA CADRE", M, y);
           y += 5;
           (v.shot_list || []).forEach(s => {
             checkPage(8);
@@ -676,7 +731,7 @@ export default function App() {
         if (cta.backup) {
           setF("normal", 8);
           doc.setTextColor(...MUTED);
-          doc.text(`Backup: ${cta.backup}`, M, y);
+          doc.text(`Alternativ: ${cta.backup}`, M, y);
           y += 5;
         }
         y += 2;
@@ -686,9 +741,9 @@ export default function App() {
           checkPage(20);
           setF("bold", 8);
           doc.setTextColor(...DARK);
-          doc.text("AD COPY", M, y);
+          doc.text("TEXT RECLAMĂ", M, y);
           y += 5;
-          [["Headline", ad.headline, true], ["Description", ad.description, false], ["Caption", ad.caption, false]].forEach(([lbl, val, isBold]) => {
+          [["Titlu", ad.headline, true], ["Descriere", ad.description, false], ["Caption", ad.caption, false]].forEach(([lbl, val, isBold]) => {
             if (!val) return;
             checkPage(10);
             setF("normal", 7);
@@ -710,7 +765,7 @@ export default function App() {
         doc.roundedRect(M, y, CW, 34, 2, 2, "F");
         setF("bold", 7);
         doc.setTextColor(180, 175, 165);
-        doc.text("SCORE BREAKDOWN", M + 4, y + 5);
+        doc.text("DETALII SCOR", M + 4, y + 5);
         const sbItems = [
           ["Atentie", sb.attention, ACCENT],
           ["Valoare", sb.value, GREEN],
@@ -780,7 +835,7 @@ export default function App() {
           checkPage(12);
           setF("bold", 8);
           doc.setTextColor(...MUTED);
-          doc.text("POSTING TIP", M, y);
+          doc.text("TIP POSTARE", M, y);
           y += 4;
           setF("normal", 8);
           doc.setTextColor(...DARK);
@@ -813,31 +868,51 @@ export default function App() {
 
   return (
     <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", background: t.bg, minHeight: "100vh", color: t.dark, transition: "background .3s, color .3s" }}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} ::selection{background:${t.accent}33} ::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-thumb{background:${t.border};border-radius:3px}`}</style>
+      <style>{`
+        @keyframes spin{to{transform:rotate(360deg)}}
+        ::selection{background:${t.accent}33}
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-thumb{background:${t.border};border-radius:3px}
+        @media(max-width:768px){
+          .ss-grid{grid-template-columns:1fr !important}
+          .ss-sidebar{position:fixed !important;top:52px !important;left:0 !important;bottom:0 !important;width:100% !important;z-index:100 !important;transform:translateX(${sidebarOpen ? "0" : "-100%"}) !important;transition:transform .3s ease !important}
+          .ss-main{padding:16px !important}
+          .ss-title-bar{flex-direction:column !important;gap:10px !important;align-items:flex-start !important}
+          .ss-title-btns{flex-wrap:wrap !important}
+          .ss-ab-grid{grid-template-columns:1fr !important}
+        }
+      `}</style>
 
       {/* HEADER */}
-      <div style={{ background: dark ? "#111" : "#1A1512", padding: "0 24px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ background: dark ? "#111" : "#1A1512", padding: "0 16px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 200 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 700, color: "#F5F0E8" }}>Script</span>
-          <span style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 700, color: t.accent }}>Studio</span>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 20, color: "rgba(245,240,232,.7)", padding: "4px 8px 4px 0", lineHeight: 1 }} aria-label="Toggle sidebar">
+            {sidebarOpen ? "✕" : "☰"}
+          </button>
+          <span style={{ fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 700, color: "#F5F0E8" }}>Script</span>
+          <span style={{ fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 700, color: t.accent }}>Studio</span>
           <span style={{ fontSize: 10, background: t.accent, color: "white", padding: "3px 8px", borderRadius: 20 }}>RO</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {variants.length > 0 && (
-            <button onClick={exportPDF} style={{ background: "transparent", border: "1px solid rgba(245,240,232,.2)", borderRadius: 6, padding: "5px 12px", color: "rgba(245,240,232,.6)", fontSize: 11, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}>
-              📄 Export PDF
+            <button onClick={exportPDF} style={{ background: "transparent", border: "1px solid rgba(245,240,232,.2)", borderRadius: 6, padding: "5px 10px", color: "rgba(245,240,232,.6)", fontSize: 11, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}>
+              📄 PDF
             </button>
           )}
           <button onClick={() => setDark(!dark)} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 16, padding: 4, color: "rgba(245,240,232,.5)" }}>
             {dark ? "☀️" : "🌙"}
           </button>
-          <span style={{ fontSize: 11, color: "rgba(245,240,232,.3)" }}>by steph.ai.studio</span>
+          <span style={{ fontSize: 10, color: "rgba(245,240,232,.3)", display: "none" }} className="ss-credit">by steph.ai.studio</span>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", minHeight: "calc(100vh - 52px)" }}>
+      {/* Mobile overlay backdrop */}
+      {sidebarOpen && <div onClick={() => { if (window.innerWidth <= 768) setSidebarOpen(false); }} style={{ display: "none", position: "fixed", inset: 0, top: 52, background: "rgba(0,0,0,.4)", zIndex: 99 }} className="ss-backdrop" />}
+      <style>{`@media(max-width:768px){.ss-backdrop{display:block !important} .ss-credit{display:none !important}}`}</style>
+
+      <div className="ss-grid" style={{ display: "grid", gridTemplateColumns: sidebarOpen ? "320px 1fr" : "1fr", minHeight: "calc(100vh - 52px)", transition: "grid-template-columns .3s ease" }}>
         {/* SIDEBAR */}
-        <div style={{ background: t.card, borderRight: `1px solid ${t.border}`, padding: "20px 18px", overflowY: "auto", transition: "background .3s" }}>
+        {sidebarOpen && <div className="ss-sidebar" style={{ background: t.card, borderRight: `1px solid ${t.border}`, padding: "20px 18px", overflowY: "auto", transition: "background .3s", maxHeight: "calc(100vh - 52px)" }}>
           {/* Mode tabs */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5, marginBottom: 16 }}>
             {[["manual", "Manual"], ["analyzer", "Analizor"], ["recreate", "Recreare"]].map(([id, lbl]) => (
@@ -939,16 +1014,16 @@ export default function App() {
               ))}
             </div>
           )}
-        </div>
+        </div>}
 
         {/* MAIN CONTENT */}
-        <div style={{ padding: 24, overflowY: "auto" }}>
+        <div className="ss-main" style={{ padding: 24, overflowY: "auto" }}>
           {/* Empty state */}
           {!loading && variants.length === 0 && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", textAlign: "center", color: t.muted }}>
               <div style={{ fontSize: 52, opacity: .3, marginBottom: 18 }}>✍️</div>
               <div style={{ fontFamily: "Georgia, serif", fontSize: 24, color: t.dark, marginBottom: 8 }}>Scriptul tău perfect te așteaptă</div>
-              <div style={{ fontSize: 14, maxWidth: 380, lineHeight: 1.6 }}>Completează detaliile din stânga și generează 3 variante psihologic optimizate, cu scoring, ad copy și shot list — gata de filmat.</div>
+              <div style={{ fontSize: 14, maxWidth: 380, lineHeight: 1.6 }}>{sidebarOpen ? "Completează detaliile din stânga și generează 3 variante psihologic optimizate." : "Apasă ☰ sus pentru a deschide formularul și a genera scripturi."}</div>
             </div>
           )}
 
@@ -965,13 +1040,14 @@ export default function App() {
           {!loading && variants.length > 0 && (
             <>
               {/* Title bar */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <div className="ss-title-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
                 <div style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 700 }}>
                   Scripturi — <span style={{ color: t.accent }}>{offerLabel}</span>
                 </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button onClick={() => setViewMode("single")} style={{ background: viewMode === "single" ? t.accent : "transparent", border: `1px solid ${viewMode === "single" ? t.accent : t.border}`, borderRadius: 6, padding: "5px 12px", fontSize: 10, color: viewMode === "single" ? "white" : t.muted, cursor: "pointer", fontFamily: "inherit" }}>Single</button>
-                  <button onClick={() => { setViewMode("ab"); setAbA(0); setAbB(1); }} style={{ background: viewMode === "ab" ? t.accent : "transparent", border: `1px solid ${viewMode === "ab" ? t.accent : t.border}`, borderRadius: 6, padding: "5px 12px", fontSize: 10, color: viewMode === "ab" ? "white" : t.muted, cursor: "pointer", fontFamily: "inherit" }}>A/B Compare</button>
+                <div className="ss-title-btns" style={{ display: "flex", gap: 6 }}>
+                  <button onClick={regenerate} disabled={loading} style={{ background: t.green, border: `1px solid ${t.green}`, borderRadius: 6, padding: "5px 12px", fontSize: 10, color: "white", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 600, opacity: loading ? .5 : 1 }}>🔄 Regenerează</button>
+                  <button onClick={() => setViewMode("single")} style={{ background: viewMode === "single" ? t.accent : "transparent", border: `1px solid ${viewMode === "single" ? t.accent : t.border}`, borderRadius: 6, padding: "5px 12px", fontSize: 10, color: viewMode === "single" ? "white" : t.muted, cursor: "pointer", fontFamily: "inherit" }}>Singulară</button>
+                  <button onClick={() => { setViewMode("ab"); setAbA(0); setAbB(1); }} style={{ background: viewMode === "ab" ? t.accent : "transparent", border: `1px solid ${viewMode === "ab" ? t.accent : t.border}`, borderRadius: 6, padding: "5px 12px", fontSize: 10, color: viewMode === "ab" ? "white" : t.muted, cursor: "pointer", fontFamily: "inherit" }}>Compară A/B</button>
                 </div>
               </div>
 
