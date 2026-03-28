@@ -84,7 +84,7 @@ const CAPTION_LABELS = { burned_in: "Integrate în video", auto_generated: "Gene
 
 /* ─── PROMPT BUILDER ─── */
 function buildPrompt(mode, f) {
-  const schema = `{"variants":[{"hook_name":"str","hook":"str","voiceover_lines":[{"line":"str","seconds":5}],"on_screen_texts":[{"text":"str","seconds":3}],"shot_list":[{"shot":"str","type":"talking_head"}],"cta":{"primary":"str","backup":"str"},"ad_copy":{"headline":"str","description":"str","caption":"str"},"psychology_tags":{"primary":"loss_aversion","secondary":"urgency"},"conversion_score":88,"score_breakdown":{"attention":92,"value":85,"proof":80,"friction":78,"cta":90,"platform_fit":85},"why_it_converts":["r1","r2"],"psychology_in_action":["i1"],"what_to_test":["t1"],"posting_tip":"str","style":"talking_head","captions":"burned_in","ratio":"9:16"}]}`;
+  const schema = `{"variants":[{"hook_name":"str","hook":"str","framework":"PAS","voiceover_lines":[{"line":"str","seconds":5}],"on_screen_texts":[{"text":"str","seconds":3}],"shot_list":[{"shot":"str","type":"talking_head"}],"cta":{"primary":"str","backup":"str"},"ad_copy":{"headline":"str","description":"str","caption":"str"},"psychology_tags":{"primary":"loss_aversion","secondary":"urgency"},"conversion_score":88,"score_breakdown":{"attention":92,"value":85,"proof":80,"friction":78,"cta":90,"platform_fit":85},"why_it_converts":["r1","r2"],"psychology_in_action":["i1"],"what_to_test":["t1"],"posting_tip":"str","style":"talking_head","captions":"burned_in","ratio":"9:16"}]}`;
 
   const avatarNote = f.avatarMode ? `
 IMPORTANT — AVATAR MODE ACTIV:
@@ -103,15 +103,35 @@ REGULI AVATAR:
 
   const psychoRules = `
 REGULI OBLIGATORII DE COPYWRITING PSIHOLOGIC:
-1. FIECARE variantă TREBUIE să folosească un unghi psihologic DIFERIT. Alege din: aversiunea la pierdere, dovadă socială, autoritate, urgență, gap de curiozitate, identitate, FOMO, reciprocitate, raritate, ancorare preț, cost al inacțiunii.
-2. Hook-ul este totul — primele 3 secunde decid dacă omul se oprește din scroll. Hook-ul trebuie să LOVEASCĂ emoțional: fie cu o întrebare provocatoare, fie cu un fapt șocant, fie cu o contradicție, fie cu o promisiune concretă.
+1. FIECARE variantă TREBUIE să folosească:
+   a) Un UNGHI PSIHOLOGIC diferit (nu repeta între variante). Alege din: aversiunea la pierdere, dovadă socială, autoritate, urgență, gap de curiozitate, identitate, FOMO, reciprocitate, raritate, ancorare preț, cost al inacțiunii, efect de bandwagon, principiul contrastului, efect Zeigarnik (incompletitudine), principiul consistenței.
+   b) Un FRAMEWORK DE COPYWRITING diferit per variantă. Alege câte unul distinct:
+      - PAS (Problem → Agitate → Solve)
+      - AIDA (Attention → Interest → Desire → Action)
+      - BAB (Before → After → Bridge)
+      - 4Ps (Promise → Picture → Proof → Push)
+      - ACCA (Awareness → Comprehension → Conviction → Action)
+      - Star-Story-Solution (Personaj → Poveste → Rezolvare)
+      - FAB (Feature → Advantage → Benefit)
+      - The 1-2-3 (Un fapt → Două consecințe → Trei soluții)
+   c) O TEHNICĂ DE HOOK diferită per variantă:
+      - Pattern interrupt ("Oprește-te. Trebuie să vezi asta.")
+      - Statistică șocantă ("9 din 10 antreprenori fac asta greșit")
+      - Contradicție ("Cu cât muncești mai mult, cu atât câștigi mai puțin")
+      - Întrebare provocatoare ("De ce nimeni nu vorbește despre asta?")
+      - Confesiune/Vulnerabilitate ("Am pierdut 20.000€ ca să învăț asta")
+      - Promisiune concretă cu timp ("În 30 de secunde îți arăt cum să...")
+      - Poveste micro ("Acum 3 luni eram exact unde ești tu acum")
+      - Us vs Them ("Toți îți zic să faci X. Eu îți zic de ce e greșit.")
+   Specifică în "hook_name" ce tehnică de hook ai folosit.
+2. Hook-ul este totul — primele 3 secunde decid dacă omul se oprește din scroll. Hook-ul trebuie să LOVEASCĂ emoțional. Fiecare variantă cu altă tehnică de hook din lista de mai sus.
 3. Voiceover-ul trebuie scris în ROMÂNĂ AUTENTICĂ — așa cum vorbesc oamenii în viața reală. Nu limba de lemn corporatistă. Folosește "tu" direct, propoziții scurte, ritmul conversației naturale. Exemplu bun: "Știi momentul ăla când..." NU "Ați observat vreodată că..."
-4. Fiecare linie de voiceover trebuie să aibă un SCOP clar: hook → problemă → agitare → soluție → dovadă → CTA. Nu umple cu cuvinte goale.
+4. Fiecare linie de voiceover trebuie să urmeze framework-ul ales. Structura trebuie să fie clară și fiecare linie să aibă un SCOP precis în framework. Nu umple cu cuvinte goale.
 5. On-screen text-ul trebuie să fie PUNCHLINES scurte care amplifică mesajul vocal — nu transcrierea voiceover-ului. Max 5-7 cuvinte per text.
 6. CTA-ul trebuie să fie SPECIFIC și să creeze urgență sau curiozitate: "Linkul e în bio — doar azi" NU "Click pe link".
-7. Ad copy-ul (headline, description, caption) trebuie scris separat de script — sunt texte pentru platforma de ads, nu voiceover.
-8. "why_it_converts" trebuie să explice CONCRET ce principiu psihologic e aplicat și DE CE funcționează pe audiența target.
-9. "psychology_in_action" trebuie să arate exact UNDE în script se aplică fiecare principiu.
+7. Ad copy-ul (headline, description, caption) trebuie scris separat de script — sunt texte pentru platforma de ads, nu voiceover. Headline-ul folosește aceeași tehnică psihologică ca hook-ul.
+8. "why_it_converts" trebuie să explice CONCRET: (a) ce framework de copywriting e folosit și de ce e potrivit pentru acest obiectiv, (b) ce principiu psihologic e aplicat, (c) de ce funcționează pe audiența target specifică.
+9. "psychology_in_action" trebuie să arate exact UNDE în script se aplică fiecare principiu — cu referință la linia specifică. Ex: "Linia 2 folosește aversiunea la pierdere — «pierzi 3 clienți pe zi» creează anxietate care motivează acțiunea."
 10. "what_to_test" trebuie să sugereze teste A/B CONCRETE și acționabile.
 11. "posting_tip" trebuie să fie sfat PRACTIC de postare (ora, hashtag-uri, format).
 12. "style" trebuie RECOMANDAT de tine pentru fiecare variantă — alege cel mai potrivit stil video (talking_head, screen_recording, b_roll, mixed) în funcție de conținutul scriptului și platforma target. NU pune mereu talking_head — gândește ce stil servește cel mai bine mesajul.
@@ -121,6 +141,11 @@ REGULI OBLIGATORII DE COPYWRITING PSIHOLOGIC:
    - "Mediu (45-90s)": TOTAL voiceover 50-80 secunde. 6-10 linii. Hook 3s, problemă 10s, agitare 10s, soluție 15s, dovadă 10s, CTA 7s. On-screen text: 5-7.
    - "Lung (1-2 min)": TOTAL voiceover 70-110 secunde. 10-15 linii. Hook 3s, context 10s, problemă 15s, agitare 15s, soluție 20s, dovezi 15s, CTA 10s. On-screen text: 7-10.
    SUMA TUTUROR "seconds" din voiceover_lines TREBUIE să fie în intervalul duratei selectate. Verifică înainte de a returna JSON-ul.
+15. OBIECTIVUL dictează STRUCTURA și TONUL scriptului — adaptează RADICAL:
+   - "Vânzare": Focusul e pe CONVERSIE. Structură: problemă → agitare → soluție → dovadă → urgență → CTA direct de cumpărare. Tonul e persuasiv, cu scarcity și social proof. CTA-ul trebuie să fie clar: "Cumpără acum", "Comandă azi", "Link în bio — oferta expiră".
+   - "Lead": Focusul e pe CAPTARE. Nu vinde direct — oferă ceva GRATUIT în schimbul datelor. Structură: curiozitate → valoare gratuită → ce primesc → CTA de înscriere. Tonul e generos, educativ. CTA: "Descarcă ghidul gratuit", "Înscrie-te pentru masterclass", "Lasă un comentariu cu X și îți trimit".
+   - "Awareness": Focusul e pe MEMORABILITATE. Nu cere nimic — doar impresionează și rămâne în minte. Structură: hook viral → poveste/fapt surprinzător → mesaj de brand → CTA soft. Tonul e inspirațional sau entertainer. CTA: "Urmărește pentru mai mult", "Salvează pentru mai târziu", "Trimite cuiva care...".
+   - "Engagement": Focusul e pe INTERACȚIUNE. Vrei comentarii, share-uri, saves. Structură: întrebare provocatoare → conținut polarizant/relatable → invitație la dialog. Tonul e conversațional, provocator. CTA: "Tu ce crezi?", "Scrie în comentarii", "Etichetează pe cineva care...".
 
 LIMBA: Română naturală, de conversație. NU traduceți din engleză. Gândește direct în română.
 
@@ -262,7 +287,9 @@ function VariantCard({ v, idx, t, onRefine }) {
   return (
     <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, overflow: "hidden" }}>
       {/* Header: meta info */}
-      <div style={{ padding: "10px 22px", borderBottom: `1px solid ${t.border}`, display: "flex", gap: 12, fontSize: 11, color: t.muted, flexWrap: "wrap", alignItems: "center" }}>
+      <div style={{ padding: "10px 22px", borderBottom: `1px solid ${t.border}`, display: "flex", gap: 8, fontSize: 11, color: t.muted, flexWrap: "wrap", alignItems: "center" }}>
+        {v.framework && <span style={{ background: t.green + "18", border: `1px solid ${t.green}44`, color: t.green, fontSize: 9, padding: "2px 8px", borderRadius: 4, fontWeight: 700, letterSpacing: ".04em" }}>{v.framework}</span>}
+        {v.hook_name && <span style={{ background: t.accent + "15", border: `1px solid ${t.accent}33`, color: t.accent, fontSize: 9, padding: "2px 8px", borderRadius: 4, fontWeight: 600, letterSpacing: ".03em" }}>{v.hook_name}</span>}
         <span>Stil: <strong>{STYLE_LABELS[v.style] || v.style || "Mixt"}</strong></span>
         <span>Subtitrări: <strong>{CAPTION_LABELS[v.captions] || v.captions || "Integrate în video"}</strong></span>
         <span>Format: <strong>{v.ratio || "9:16"}</strong></span>
@@ -672,7 +699,14 @@ export default function App() {
         doc.text(`${v.conversion_score}`, scoreX, y + 7.5, { align: "center" });
         y += 16;
 
-        // Psychology tags
+        // Framework + Hook technique + Psychology tags
+        const metaLine = [v.framework ? `Framework: ${v.framework}` : null, v.hook_name ? `Hook: ${v.hook_name}` : null].filter(Boolean).join("  |  ");
+        if (metaLine) {
+          setF("bold", 8);
+          doc.setTextColor(...GREEN);
+          doc.text(metaLine, M, y);
+          y += 5;
+        }
         if (pt.primary) {
           setF("normal", 8);
           doc.setTextColor(...MUTED);
